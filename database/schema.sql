@@ -1,0 +1,28 @@
+CREATE TABLE rooms (
+	id SERIAL PRIMARY KEY,
+	room_number VARCHAR(10) NOT NULL UNIQUE,
+	room_type VARCHAR(50) NOT NULL,
+	price_per_night NUMERIC(10, 2) NOT NULL,
+	is_available BOOLEAN NOT NULL DEFAULT TRUE,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE guests (
+	id SERIAL PRIMARY KEY,
+	first_name VARCHAR(100) NOT NULL,
+	last_name VARCHAR(100) NOT NULL,
+	email VARCHAR(255) NOT NULL UNIQUE,
+	phone VARCHAR(20),
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE bookings (
+	id SERIAL PRIMARY KEY,
+	guest_id INTEGER NOT NULL REFERENCES guests(id),
+	room_id INTEGER NOT NULL REFERENCES rooms(id),
+	check_in_date DATE NOT NULL,
+	check_out_date DATE NOT NULL,
+	status VARCHAR(20) NOT NULL DEFAULT 'pending',
+	weather_data JSONB,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
