@@ -27,4 +27,19 @@ const processGetRoomById = async (id) => {
 	return { success: true, data: result.rows[0] };
 };
 
-export { processCreateRoom, processGetRooms, processGetRoomById };
+const processDeleteRoom = async (id) => {
+	const result = await db.query('DELETE FROM rooms WHERE id = $1 RETURNING *', [
+		id,
+	]);
+	if (!result.rows[0]) {
+		throw new Error('Room not found');
+	}
+	return { success: true, data: result.rows[0] };
+};
+
+export {
+	processCreateRoom,
+	processGetRooms,
+	processGetRoomById,
+	processDeleteRoom,
+};

@@ -5,8 +5,12 @@ jest.unstable_mockModule('../../../includes/db/db.js', () => ({
 }));
 
 const { db } = await import('../../../includes/db/db.js');
-const { processCreateRoom, processGetRoomById, processGetRooms } =
-	await import('../functions/rooms.js');
+const {
+	processCreateRoom,
+	processDeleteRoom,
+	processGetRoomById,
+	processGetRooms,
+} = await import('../functions/rooms.js');
 
 describe('Room Management', () => {
 	beforeEach(() => {
@@ -88,5 +92,33 @@ describe('Room Management', () => {
 		db.query.mockResolvedValueOnce({ rows: [] });
 
 		await expect(processGetRoomById(999)).rejects.toThrow('Room not found');
+	});
+
+	it('should delete one room successfully', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					room_number: '101',
+					room_type: 'single',
+					price_per_night: 100.0,
+				},
+			],
+		});
+
+		const result = await processDeleteRoom(1);
+
+		expect(result.success).toBe(true);
+		expect(result.data.id).toBe(1);
+		expect(db.query).toHaveBeenCalledWith(
+			'DELETE FROM rooms WHERE id = $1 RETURNING *',
+			[1],
+		);
+	});
+
+	it('should throw when deleting missing room', async () => {
+		db.query.mockResolvedValueOnce({ rows: [] });
+
+		await expect(processDeleteRoom(999)).rejects.toThrow('Room not found');
 	});
 });
