@@ -61,9 +61,109 @@
 					<p id="addRoomMsg" class="text-sm mt-2"></p>
 				</form>
 			</section>
+
+			<section class="bg-zinc-800 rounded-lg shadow p-6 mb-6">
+				<h2 class="text-xl font-semibold text-zinc-200 mb-4">
+					Find Room By ID
+				</h2>
+				<form id="findRoomForm" class="flex items-end gap-3">
+					<div class="flex-1">
+						<label class="block text-sm font-medium text-zinc-400 mb-1"
+							>Room ID</label
+						>
+						<input
+							type="number"
+							id="room_id"
+							placeholder="e.g. 1"
+							min="1"
+							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 placeholder-zinc-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+						/>
+					</div>
+					<button
+						type="submit"
+						class="bg-zinc-600 text-white px-4 py-2 rounded hover:bg-zinc-500 transition"
+					>
+						Find
+					</button>
+				</form>
+				<p id="findRoomMsg" class="text-sm mt-2"></p>
+			</section>
+
+			<section class="bg-zinc-800 rounded-lg shadow p-6">
+				<div class="flex items-center justify-between mb-4">
+					<h2 class="text-xl font-semibold text-zinc-200">Rooms</h2>
+					<button
+						type="button"
+						id="refreshRoomsBtn"
+						class="bg-zinc-700 text-zinc-100 px-3 py-2 rounded hover:bg-zinc-600 transition text-sm"
+					>
+						Refresh
+					</button>
+				</div>
+				<div class="overflow-x-auto">
+					<table class="w-full text-left text-sm">
+						<thead>
+							<tr class="text-zinc-300 border-b border-zinc-700">
+								<th class="py-2 pr-4">ID</th>
+								<th class="py-2 pr-4">Room Number</th>
+								<th class="py-2 pr-4">Type</th>
+								<th class="py-2">Price/Night</th>
+							</tr>
+						</thead>
+						<tbody id="roomsTableBody" class="text-zinc-100"></tbody>
+					</table>
+				</div>
+				<p id="roomsMsg" class="text-sm mt-3"></p>
+			</section>
 		</div>
 
 		<script>
+			const roomsTableBody = document.getElementById('roomsTableBody');
+			const roomsMsg = document.getElementById('roomsMsg');
+
+			const renderRooms = (rooms) => {
+				if (!rooms.length) {
+					roomsTableBody.innerHTML =
+						'<tr><td colspan="4" class="py-3 text-zinc-400">No rooms found.</td></tr>';
+					return;
+				}
+
+				roomsTableBody.innerHTML = rooms
+					.map(
+						(room) => `
+							<tr class="border-b border-zinc-700/60">
+								<td class="py-2 pr-4">${room.id}</td>
+								<td class="py-2 pr-4">${room.room_number}</td>
+								<td class="py-2 pr-4 capitalize">${room.room_type}</td>
+								<td class="py-2">$${Number(room.price_per_night).toFixed(2)}</td>
+							</tr>
+						`,
+					)
+					.join('');
+			};
+
+			const loadRooms = async () => {
+				roomsMsg.textContent = 'Loading rooms...';
+				roomsMsg.className = 'text-sm mt-3 text-zinc-400';
+
+				try {
+					const res = await fetch('/bookings/rooms');
+					const data = await res.json();
+
+					if (!data.success) {
+						throw new Error(data.error || 'Failed to load rooms');
+					}
+
+					renderRooms(data.data || []);
+					roomsMsg.textContent = `Loaded ${data.data.length} room(s).`;
+					roomsMsg.className = 'text-sm mt-3 text-zinc-400';
+				} catch (err) {
+					roomsTableBody.innerHTML = '';
+					roomsMsg.textContent = err.message;
+					roomsMsg.className = 'text-sm mt-3 text-red-500';
+				}
+			};
+
 			document
 				.getElementById('addRoomForm')
 				.addEventListener('submit', async (e) => {
@@ -87,6 +187,7 @@
 							msg.textContent = `Room ${data.data.room_number} added successfully.`;
 							msg.className = 'text-sm mt-2 text-green-600';
 							e.target.reset();
+							loadRooms();
 						} else {
 							msg.textContent = data.error || 'Failed to add room.';
 							msg.className = 'text-sm mt-2 text-red-600';
@@ -96,6 +197,36 @@
 						msg.className = 'text-sm mt-2 text-red-600';
 					}
 				});
+
+			document
+				.getElementById('findRoomForm')
+				.addEventListener('submit', async (e) => {
+					e.preventDefault();
+					const findRoomMsg = document.getElementById('findRoomMsg');
+					const roomId = document.getElementById('room_id').value;
+
+					try {
+						const res = await fetch(`/bookings/rooms/${roomId}`);
+						const data = await res.json();
+
+						if (data.success) {
+							findRoomMsg.textContent = `Found: Room ${data.data.room_number} (${data.data.room_type}) - $${Number(data.data.price_per_night).toFixed(2)}`;
+							findRoomMsg.className = 'text-sm mt-2 text-green-600';
+						} else {
+							findRoomMsg.textContent = data.error || 'Room not found.';
+							findRoomMsg.className = 'text-sm mt-2 text-red-600';
+						}
+					} catch {
+						findRoomMsg.textContent = 'Request failed.';
+						findRoomMsg.className = 'text-sm mt-2 text-red-600';
+					}
+				});
+
+			document
+				.getElementById('refreshRoomsBtn')
+				.addEventListener('click', loadRooms);
+
+			loadRooms();
 		</script>
 	</body>
 </html>

@@ -1,4 +1,8 @@
-import { processCreateRoom } from '../functions/rooms.js';
+import {
+	processCreateRoom,
+	processGetRoomById,
+	processGetRooms,
+} from '../functions/rooms.js';
 
 const createRoom = async (req, res) => {
 	try {
@@ -14,4 +18,23 @@ const createRoom = async (req, res) => {
 	}
 };
 
-export { createRoom };
+const getRooms = async (req, res) => {
+	try {
+		const result = await processGetRooms();
+		return res.status(200).send({ ...result });
+	} catch (err) {
+		return res.status(400).send({ success: false, error: err.message });
+	}
+};
+
+const getRoomById = async (req, res) => {
+	try {
+		const id = Number(req.params.id);
+		const result = await processGetRoomById(id);
+		return res.status(200).send({ ...result });
+	} catch (err) {
+		return res.status(400).send({ success: false, error: err.message });
+	}
+};
+
+export { createRoom, getRooms, getRoomById };

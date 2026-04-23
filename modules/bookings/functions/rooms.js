@@ -14,4 +14,17 @@ const processCreateRoom = async ({
 	return { success: true, data: result.rows[0] };
 };
 
-export { processCreateRoom };
+const processGetRooms = async () => {
+	const result = await db.query('SELECT * FROM rooms ORDER BY id ASC');
+	return { success: true, data: result.rows };
+};
+
+const processGetRoomById = async (id) => {
+	const result = await db.query('SELECT * FROM rooms WHERE id = $1', [id]);
+	if (!result.rows[0]) {
+		throw new Error('Room not found');
+	}
+	return { success: true, data: result.rows[0] };
+};
+
+export { processCreateRoom, processGetRooms, processGetRoomById };
