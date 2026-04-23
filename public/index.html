@@ -7,94 +7,205 @@
 		<script src="https://cdn.tailwindcss.com"></script>
 	</head>
 	<body class="bg-zinc-950 text-zinc-100 min-h-screen p-8">
-		<div class="max-w-2xl mx-auto">
+		<div class="max-w-6xl mx-auto">
 			<h1 class="text-3xl font-bold text-white mb-8">Hotel Booking System</h1>
-
-			<!-- Add Room -->
-			<section class="bg-zinc-800 rounded-lg shadow p-6 mb-6">
-				<h2 class="text-xl font-semibold text-zinc-200 mb-4">Add Room</h2>
-				<form id="addRoomForm" class="space-y-4">
-					<div>
-						<label class="block text-sm font-medium text-zinc-400 mb-1"
-							>Room Number</label
-						>
-						<input
-							type="text"
-							id="room_number"
-							placeholder="e.g. 101"
-							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 placeholder-zinc-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						/>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-zinc-400 mb-1"
-							>Room Type</label
-						>
-						<select
-							id="room_type"
-							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						>
-							<option value="">Select type</option>
-							<option value="single">Single</option>
-							<option value="double">Double</option>
-							<option value="suite">Suite</option>
-						</select>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-zinc-400 mb-1"
-							>Price Per Night ($)</label
-						>
-						<input
-							type="number"
-							id="price_per_night"
-							placeholder="e.g. 150"
-							min="0"
-							step="0.01"
-							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 placeholder-zinc-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						/>
-					</div>
-					<button
-						type="submit"
-						class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500 transition"
-					>
-						Add Room
-					</button>
-					<p id="addRoomMsg" class="text-sm mt-2"></p>
-				</form>
-			</section>
 
 			<section class="bg-zinc-800 rounded-lg shadow p-6 mb-6">
 				<h2 class="text-xl font-semibold text-zinc-200 mb-4">
-					Find Room By ID
+					Dashboard — Today's Weather
 				</h2>
-				<form id="findRoomForm" class="flex items-end gap-3">
-					<div class="flex-1">
-						<label class="block text-sm font-medium text-zinc-400 mb-1"
-							>Room ID</label
-						>
-						<input
-							type="number"
-							id="room_id"
-							placeholder="e.g. 1"
-							min="1"
-							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 placeholder-zinc-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						/>
-					</div>
-					<button
-						type="submit"
-						class="bg-zinc-600 text-white px-4 py-2 rounded hover:bg-zinc-500 transition"
-					>
-						Find
-					</button>
-				</form>
-				<p id="findRoomMsg" class="text-sm mt-2"></p>
+				<div id="weatherCard" class="text-zinc-200 text-sm"></div>
 			</section>
 
-			<section class="bg-zinc-800 rounded-lg shadow p-6">
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				<section class="bg-zinc-800 rounded-lg shadow p-6">
+					<h2 class="text-xl font-semibold text-zinc-200 mb-4">Add Room</h2>
+					<form id="addRoomForm" class="space-y-4">
+						<div>
+							<label class="block text-sm font-medium text-zinc-400 mb-1"
+								>Room Number</label
+							>
+							<input
+								type="text"
+								id="room_number"
+								placeholder="e.g. 101"
+								class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 placeholder-zinc-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							/>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-zinc-400 mb-1"
+								>Room Type</label
+							>
+							<select
+								id="room_type"
+								class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							>
+								<option value="">Select type</option>
+								<option value="single">Single</option>
+								<option value="double">Double</option>
+								<option value="suite">Suite</option>
+							</select>
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-zinc-400 mb-1"
+								>Price Per Night ($)</label
+							>
+							<input
+								type="number"
+								id="price_per_night"
+								placeholder="e.g. 150"
+								min="0"
+								step="0.01"
+								class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 placeholder-zinc-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							/>
+						</div>
+						<button
+							type="submit"
+							class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500 transition"
+						>
+							Add Room
+						</button>
+						<p id="addRoomMsg" class="text-sm mt-2"></p>
+					</form>
+				</section>
+
+				<section class="bg-zinc-800 rounded-lg shadow p-6">
+					<h2 class="text-xl font-semibold text-zinc-200 mb-4">Add Guest</h2>
+					<form id="addGuestForm" class="space-y-4">
+						<div class="grid grid-cols-2 gap-3">
+							<input
+								type="text"
+								id="first_name"
+								placeholder="First name"
+								class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+							/>
+							<input
+								type="text"
+								id="last_name"
+								placeholder="Last name"
+								class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+							/>
+						</div>
+						<input
+							type="email"
+							id="guest_email"
+							placeholder="Email"
+							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+						/>
+						<input
+							type="text"
+							id="guest_phone"
+							placeholder="Phone"
+							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+						/>
+						<button
+							type="submit"
+							class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-500 transition"
+						>
+							Add Guest
+						</button>
+						<p id="addGuestMsg" class="text-sm mt-2"></p>
+					</form>
+				</section>
+			</div>
+
+			<section class="bg-zinc-800 rounded-lg shadow p-6 mt-6">
+				<h2 class="text-xl font-semibold text-zinc-200 mb-4">Create Booking</h2>
+				<form
+					id="addBookingForm"
+					class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3"
+				>
+					<select
+						id="booking_guest"
+						class="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+					></select>
+					<select
+						id="booking_room"
+						class="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+					></select>
+					<input
+						type="date"
+						id="check_in_date"
+						class="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+					/>
+					<input
+						type="date"
+						id="check_out_date"
+						class="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+					/>
+					<button
+						type="submit"
+						class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-500 transition"
+					>
+						Add Booking
+					</button>
+				</form>
+				<p id="addBookingMsg" class="text-sm mt-2"></p>
+			</section>
+
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+				<section class="bg-zinc-800 rounded-lg shadow p-6">
+					<div class="flex items-center justify-between mb-4">
+						<h2 class="text-xl font-semibold text-zinc-200">Rooms</h2>
+						<button
+							type="button"
+							id="refreshRoomsBtn"
+							class="bg-zinc-700 text-zinc-100 px-3 py-2 rounded hover:bg-zinc-600 transition text-sm"
+						>
+							Refresh
+						</button>
+					</div>
+					<div class="overflow-x-auto">
+						<table class="w-full text-left text-sm">
+							<thead>
+								<tr class="text-zinc-300 border-b border-zinc-700">
+									<th class="py-2 pr-4">ID</th>
+									<th class="py-2 pr-4">Room</th>
+									<th class="py-2 pr-4">Type</th>
+									<th class="py-2 pr-4">Price</th>
+									<th class="py-2">Action</th>
+								</tr>
+							</thead>
+							<tbody id="roomsTableBody" class="text-zinc-100"></tbody>
+						</table>
+					</div>
+					<p id="roomsMsg" class="text-sm mt-3"></p>
+				</section>
+
+				<section class="bg-zinc-800 rounded-lg shadow p-6">
+					<div class="flex items-center justify-between mb-4">
+						<h2 class="text-xl font-semibold text-zinc-200">Guests</h2>
+						<button
+							type="button"
+							id="refreshGuestsBtn"
+							class="bg-zinc-700 text-zinc-100 px-3 py-2 rounded hover:bg-zinc-600 transition text-sm"
+						>
+							Refresh
+						</button>
+					</div>
+					<div class="overflow-x-auto">
+						<table class="w-full text-left text-sm">
+							<thead>
+								<tr class="text-zinc-300 border-b border-zinc-700">
+									<th class="py-2 pr-4">ID</th>
+									<th class="py-2 pr-4">Name</th>
+									<th class="py-2 pr-4">Email</th>
+									<th class="py-2">Phone</th>
+								</tr>
+							</thead>
+							<tbody id="guestsTableBody" class="text-zinc-100"></tbody>
+						</table>
+					</div>
+					<p id="guestsMsg" class="text-sm mt-3"></p>
+				</section>
+			</div>
+
+			<section class="bg-zinc-800 rounded-lg shadow p-6 mt-6">
 				<div class="flex items-center justify-between mb-4">
-					<h2 class="text-xl font-semibold text-zinc-200">Rooms</h2>
+					<h2 class="text-xl font-semibold text-zinc-200">Bookings</h2>
 					<button
 						type="button"
-						id="refreshRoomsBtn"
+						id="refreshBookingsBtn"
 						class="bg-zinc-700 text-zinc-100 px-3 py-2 rounded hover:bg-zinc-600 transition text-sm"
 					>
 						Refresh
@@ -105,24 +216,134 @@
 						<thead>
 							<tr class="text-zinc-300 border-b border-zinc-700">
 								<th class="py-2 pr-4">ID</th>
-								<th class="py-2 pr-4">Room Number</th>
-								<th class="py-2 pr-4">Type</th>
-								<th class="py-2 pr-4">Price/Night</th>
+								<th class="py-2 pr-4">Guest</th>
+								<th class="py-2 pr-4">Room</th>
+								<th class="py-2 pr-4">Check-in</th>
+								<th class="py-2 pr-4">Check-out</th>
+								<th class="py-2 pr-4">Status</th>
 								<th class="py-2">Action</th>
 							</tr>
 						</thead>
-						<tbody id="roomsTableBody" class="text-zinc-100"></tbody>
+						<tbody id="bookingsTableBody" class="text-zinc-100"></tbody>
 					</table>
 				</div>
-				<p id="roomsMsg" class="text-sm mt-3"></p>
+				<p id="bookingsMsg" class="text-sm mt-3"></p>
 			</section>
 		</div>
 
 		<script>
-			const roomsTableBody = document.getElementById('roomsTableBody');
-			const roomsMsg = document.getElementById('roomsMsg');
+			const MOCK_PATHS = {
+				guests: '/mock/guests.json',
+				bookings: '/mock/bookings.json',
+				weather: '/mock/weather.json',
+			};
 
-			const renderRooms = (rooms) => {
+			let rooms = [];
+			let guests = [];
+			let bookings = [];
+			let weather = null;
+
+			const roomsTableBody = document.getElementById('roomsTableBody');
+			const guestsTableBody = document.getElementById('guestsTableBody');
+			const bookingsTableBody = document.getElementById('bookingsTableBody');
+			const roomsMsg = document.getElementById('roomsMsg');
+			const guestsMsg = document.getElementById('guestsMsg');
+			const bookingsMsg = document.getElementById('bookingsMsg');
+			const weatherCard = document.getElementById('weatherCard');
+
+			const statusClass = (status) => {
+				if (status === 'confirmed') return 'text-emerald-400';
+				if (status === 'cancelled') return 'text-red-400';
+				return 'text-amber-400';
+			};
+
+			const getGuestName = (guestId) => {
+				const guest = guests.find((item) => item.id === guestId);
+				return guest
+					? `${guest.first_name} ${guest.last_name}`
+					: `Guest #${guestId}`;
+			};
+
+			const getRoomLabel = (roomId) => {
+				const room = rooms.find((item) => item.id === roomId);
+				return room ? `Room ${room.room_number}` : `Room #${roomId}`;
+			};
+
+			const nextId = (data) =>
+				data.length > 0 ? Math.max(...data.map((item) => item.id)) + 1 : 1;
+
+			const loadRoomsFromApi = async () => {
+				const response = await fetch('/bookings/rooms');
+				const data = await response.json();
+
+				if (!data.success) {
+					throw new Error(data.error || 'Failed to load rooms');
+				}
+
+				rooms = data.data || [];
+			};
+
+			const createRoomViaApi = async ({
+				room_number,
+				room_type,
+				price_per_night,
+			}) => {
+				const response = await fetch('/bookings/rooms', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ room_number, room_type, price_per_night }),
+				});
+				const data = await response.json();
+
+				if (!data.success) {
+					throw new Error(data.error || 'Failed to create room');
+				}
+
+				return data.data;
+			};
+
+			const deleteRoomViaApi = async (roomId) => {
+				const response = await fetch(`/bookings/rooms/${roomId}`, {
+					method: 'DELETE',
+				});
+				const data = await response.json();
+
+				if (!data.success) {
+					throw new Error(data.error || 'Failed to delete room');
+				}
+
+				return data.data;
+			};
+
+			const hydrateMockData = async () => {
+				const [guestsRes, bookingsRes, weatherRes] = await Promise.all([
+					fetch(MOCK_PATHS.guests),
+					fetch(MOCK_PATHS.bookings),
+					fetch(MOCK_PATHS.weather),
+				]);
+
+				guests = await guestsRes.json();
+				bookings = await bookingsRes.json();
+				weather = await weatherRes.json();
+			};
+
+			const renderWeather = () => {
+				if (!weather) {
+					weatherCard.innerHTML =
+						'<p class="text-zinc-400">Weather unavailable.</p>';
+					return;
+				}
+
+				weatherCard.innerHTML = `
+					<p><span class="text-zinc-400">Location:</span> ${weather.location}</p>
+					<p><span class="text-zinc-400">Date:</span> ${weather.date}</p>
+					<p><span class="text-zinc-400">Summary:</span> ${weather.summary}</p>
+					<p><span class="text-zinc-400">Max/Min:</span> ${weather.temperature_2m_max}°C / ${weather.temperature_2m_min}°C</p>
+					<p><span class="text-zinc-400">Precipitation:</span> ${weather.precipitation_sum} mm</p>
+				`;
+			};
+
+			const renderRooms = () => {
 				if (!rooms.length) {
 					roomsTableBody.innerHTML =
 						'<tr><td colspan="5" class="py-3 text-zinc-400">No rooms found.</td></tr>';
@@ -152,46 +373,105 @@
 					.join('');
 			};
 
-			const deleteRoom = async (roomId) => {
-				try {
-					const res = await fetch(`/bookings/rooms/${roomId}`, {
-						method: 'DELETE',
-					});
-					const data = await res.json();
-
-					if (!data.success) {
-						throw new Error(data.error || 'Failed to delete room');
-					}
-
-					roomsMsg.textContent = `Deleted room ${data.data.room_number}.`;
-					roomsMsg.className = 'text-sm mt-3 text-green-600';
-					loadRooms();
-				} catch (err) {
-					roomsMsg.textContent = err.message;
-					roomsMsg.className = 'text-sm mt-3 text-red-500';
+			const renderGuests = () => {
+				if (!guests.length) {
+					guestsTableBody.innerHTML =
+						'<tr><td colspan="4" class="py-3 text-zinc-400">No guests found.</td></tr>';
+					return;
 				}
+
+				guestsTableBody.innerHTML = guests
+					.map(
+						(guest) => `
+							<tr class="border-b border-zinc-700/60">
+								<td class="py-2 pr-4">${guest.id}</td>
+								<td class="py-2 pr-4">${guest.first_name} ${guest.last_name}</td>
+								<td class="py-2 pr-4">${guest.email}</td>
+								<td class="py-2">${guest.phone}</td>
+							</tr>
+						`,
+					)
+					.join('');
 			};
 
-			const loadRooms = async () => {
-				roomsMsg.textContent = 'Loading rooms...';
-				roomsMsg.className = 'text-sm mt-3 text-zinc-400';
-
-				try {
-					const res = await fetch('/bookings/rooms');
-					const data = await res.json();
-
-					if (!data.success) {
-						throw new Error(data.error || 'Failed to load rooms');
-					}
-
-					renderRooms(data.data || []);
-					roomsMsg.textContent = `Loaded ${data.data.length} room(s).`;
-					roomsMsg.className = 'text-sm mt-3 text-zinc-400';
-				} catch (err) {
-					roomsTableBody.innerHTML = '';
-					roomsMsg.textContent = err.message;
-					roomsMsg.className = 'text-sm mt-3 text-red-500';
+			const renderBookings = () => {
+				if (!bookings.length) {
+					bookingsTableBody.innerHTML =
+						'<tr><td colspan="7" class="py-3 text-zinc-400">No bookings found.</td></tr>';
+					return;
 				}
+
+				bookingsTableBody.innerHTML = bookings
+					.map(
+						(booking) => `
+							<tr class="border-b border-zinc-700/60">
+								<td class="py-2 pr-4">${booking.id}</td>
+								<td class="py-2 pr-4">${getGuestName(booking.guest_id)}</td>
+								<td class="py-2 pr-4">${getRoomLabel(booking.room_id)}</td>
+								<td class="py-2 pr-4">${booking.check_in_date}</td>
+								<td class="py-2 pr-4">${booking.check_out_date}</td>
+								<td class="py-2 pr-4 font-semibold ${statusClass(booking.status)}">${booking.status}</td>
+								<td class="py-2">
+									${
+										booking.status === 'pending'
+											? `<button
+												type="button"
+												class="cancel-booking-btn bg-amber-700 text-white px-3 py-1 rounded hover:bg-amber-600 transition text-xs"
+												data-booking-id="${booking.id}"
+											>
+												Cancel
+											</button>`
+											: '<span class="text-zinc-500 text-xs">-</span>'
+									}
+								</td>
+							</tr>
+						`,
+					)
+					.join('');
+			};
+
+			const syncBookingSelects = () => {
+				const bookingGuest = document.getElementById('booking_guest');
+				const bookingRoom = document.getElementById('booking_room');
+
+				bookingGuest.innerHTML = guests
+					.map(
+						(guest) =>
+							`<option value="${guest.id}">${guest.first_name} ${guest.last_name}</option>`,
+					)
+					.join('');
+
+				bookingRoom.innerHTML = rooms
+					.map(
+						(room) =>
+							`<option value="${room.id}">Room ${room.room_number} (${room.room_type})</option>`,
+					)
+					.join('');
+			};
+
+			const refreshAllViews = async ({ reloadRooms = true } = {}) => {
+				if (reloadRooms) {
+					try {
+						await loadRoomsFromApi();
+						roomsMsg.textContent = `Loaded ${rooms.length} room(s) from API.`;
+						roomsMsg.className = 'text-sm mt-3 text-zinc-400';
+					} catch (err) {
+						rooms = [];
+						roomsMsg.textContent = err.message;
+						roomsMsg.className = 'text-sm mt-3 text-red-500';
+					}
+				}
+
+				renderWeather();
+				renderRooms();
+				renderGuests();
+				renderBookings();
+				syncBookingSelects();
+
+				guestsMsg.textContent = `Loaded ${guests.length} guest(s) from mock JSON.`;
+				guestsMsg.className = 'text-sm mt-3 text-zinc-400';
+				bookingsMsg.textContent = `Loaded ${bookings.length} booking(s) from mock JSON.`;
+				bookingsMsg.className = 'text-sm mt-3 text-zinc-400';
 			};
 
 			document
@@ -199,78 +479,156 @@
 				.addEventListener('submit', async (e) => {
 					e.preventDefault();
 					const msg = document.getElementById('addRoomMsg');
-					const body = {
-						room_number: document.getElementById('room_number').value.trim(),
-						room_type: document.getElementById('room_type').value,
-						price_per_night: parseFloat(
-							document.getElementById('price_per_night').value,
-						),
-					};
+					const roomNumber = document
+						.getElementById('room_number')
+						.value.trim();
+					const roomType = document.getElementById('room_type').value;
+					const price = Number(
+						document.getElementById('price_per_night').value,
+					);
+
+					if (!roomNumber || !roomType || Number.isNaN(price)) {
+						msg.textContent = 'Please fill in all room fields.';
+						msg.className = 'text-sm mt-2 text-red-600';
+						return;
+					}
+
 					try {
-						const res = await fetch('/bookings/rooms', {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify(body),
+						await createRoomViaApi({
+							room_number: roomNumber,
+							room_type: roomType,
+							price_per_night: price,
 						});
-						const data = await res.json();
-						if (data.success) {
-							msg.textContent = `Room ${data.data.room_number} added successfully.`;
-							msg.className = 'text-sm mt-2 text-green-600';
-							e.target.reset();
-							loadRooms();
-						} else {
-							msg.textContent = data.error || 'Failed to add room.';
-							msg.className = 'text-sm mt-2 text-red-600';
-						}
-					} catch {
-						msg.textContent = 'Request failed.';
+
+						e.target.reset();
+						msg.textContent = `Room ${roomNumber} added successfully.`;
+						msg.className = 'text-sm mt-2 text-green-600';
+						await refreshAllViews({ reloadRooms: true });
+					} catch (err) {
+						msg.textContent = err.message || 'Request failed.';
 						msg.className = 'text-sm mt-2 text-red-600';
 					}
 				});
 
 			document
-				.getElementById('findRoomForm')
+				.getElementById('addGuestForm')
 				.addEventListener('submit', async (e) => {
 					e.preventDefault();
-					const findRoomMsg = document.getElementById('findRoomMsg');
-					const roomId = document.getElementById('room_id').value;
+					const msg = document.getElementById('addGuestMsg');
+					const firstName = document.getElementById('first_name').value.trim();
+					const lastName = document.getElementById('last_name').value.trim();
+					const email = document.getElementById('guest_email').value.trim();
+					const phone = document.getElementById('guest_phone').value.trim();
 
-					try {
-						const res = await fetch(`/bookings/rooms/${roomId}`);
-						const data = await res.json();
-
-						if (data.success) {
-							findRoomMsg.textContent = `Found: Room ${data.data.room_number} (${data.data.room_type}) - $${Number(data.data.price_per_night).toFixed(2)}`;
-							findRoomMsg.className = 'text-sm mt-2 text-green-600';
-						} else {
-							findRoomMsg.textContent = data.error || 'Room not found.';
-							findRoomMsg.className = 'text-sm mt-2 text-red-600';
-						}
-					} catch {
-						findRoomMsg.textContent = 'Request failed.';
-						findRoomMsg.className = 'text-sm mt-2 text-red-600';
+					if (!firstName || !lastName || !email || !phone) {
+						msg.textContent = 'Please fill in all guest fields.';
+						msg.className = 'text-sm mt-2 text-red-600';
+						return;
 					}
+
+					guests.push({
+						id: nextId(guests),
+						first_name: firstName,
+						last_name: lastName,
+						email,
+						phone,
+					});
+
+					e.target.reset();
+					msg.textContent = `Guest ${firstName} ${lastName} added successfully. (mock)`;
+					msg.className = 'text-sm mt-2 text-green-600';
+					await refreshAllViews({ reloadRooms: false });
 				});
 
 			document
-				.getElementById('refreshRoomsBtn')
-				.addEventListener('click', loadRooms);
+				.getElementById('addBookingForm')
+				.addEventListener('submit', async (e) => {
+					e.preventDefault();
+					const msg = document.getElementById('addBookingMsg');
+					const guestId = Number(
+						document.getElementById('booking_guest').value,
+					);
+					const roomId = Number(document.getElementById('booking_room').value);
+					const checkInDate = document.getElementById('check_in_date').value;
+					const checkOutDate = document.getElementById('check_out_date').value;
+
+					if (!guestId || !roomId || !checkInDate || !checkOutDate) {
+						msg.textContent = 'Please complete all booking fields.';
+						msg.className = 'text-sm mt-2 text-red-600';
+						return;
+					}
+
+					bookings.push({
+						id: nextId(bookings),
+						guest_id: guestId,
+						room_id: roomId,
+						check_in_date: checkInDate,
+						check_out_date: checkOutDate,
+						status: 'pending',
+					});
+
+					e.target.reset();
+					msg.textContent = 'Booking added successfully. (mock)';
+					msg.className = 'text-sm mt-2 text-green-600';
+					await refreshAllViews({ reloadRooms: false });
+				});
 
 			roomsTableBody.addEventListener('click', async (e) => {
 				const deleteButton = e.target.closest('.delete-room-btn');
-				if (!deleteButton) {
-					return;
-				}
+				if (!deleteButton) return;
 
-				const roomId = deleteButton.getAttribute('data-room-id');
-				if (!roomId) {
-					return;
-				}
+				const roomId = Number(deleteButton.getAttribute('data-room-id'));
 
-				await deleteRoom(roomId);
+				try {
+					await deleteRoomViaApi(roomId);
+					roomsMsg.textContent = `Deleted room #${roomId}.`;
+					roomsMsg.className = 'text-sm mt-3 text-green-600';
+					await refreshAllViews({ reloadRooms: true });
+				} catch (err) {
+					roomsMsg.textContent = err.message || 'Failed to delete room';
+					roomsMsg.className = 'text-sm mt-3 text-red-500';
+				}
 			});
 
-			loadRooms();
+			bookingsTableBody.addEventListener('click', async (e) => {
+				const cancelButton = e.target.closest('.cancel-booking-btn');
+				if (!cancelButton) return;
+
+				const bookingId = Number(cancelButton.getAttribute('data-booking-id'));
+				bookings = bookings.map((booking) =>
+					booking.id === bookingId
+						? { ...booking, status: 'cancelled' }
+						: booking,
+				);
+				bookingsMsg.textContent = `Booking #${bookingId} cancelled. (mock)`;
+				bookingsMsg.className = 'text-sm mt-3 text-green-600';
+				await refreshAllViews({ reloadRooms: false });
+			});
+
+			document
+				.getElementById('refreshRoomsBtn')
+				.addEventListener('click', async () => {
+					await refreshAllViews({ reloadRooms: true });
+				});
+			document
+				.getElementById('refreshGuestsBtn')
+				.addEventListener('click', async () => {
+					await refreshAllViews({ reloadRooms: false });
+				});
+			document
+				.getElementById('refreshBookingsBtn')
+				.addEventListener('click', async () => {
+					await refreshAllViews({ reloadRooms: false });
+				});
+
+			(async () => {
+				try {
+					await hydrateMockData();
+					await refreshAllViews({ reloadRooms: true });
+				} catch (err) {
+					weatherCard.innerHTML = `<p class="text-red-400">Failed to load data: ${err.message}</p>`;
+				}
+			})();
 		</script>
 	</body>
 </html>
