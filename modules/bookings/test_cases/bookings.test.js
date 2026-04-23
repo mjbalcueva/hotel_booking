@@ -11,6 +11,8 @@ const {
 	processGetRoomById,
 	processGetRooms,
 } = await import('../functions/rooms.js');
+const { validateCreateRoomRequest } =
+	await import('../controllers/validations/roomRequest.js');
 
 describe('Room Management', () => {
 	beforeEach(() => {
@@ -120,5 +122,15 @@ describe('Room Management', () => {
 		db.query.mockResolvedValueOnce({ rows: [] });
 
 		await expect(processDeleteRoom(999)).rejects.toThrow('Room not found');
+	});
+});
+
+describe('Room Validation', () => {
+	it('should reject room creation with missing required fields', async () => {
+		await expect(
+			validateCreateRoomRequest({
+				room_number: '101',
+			}),
+		).rejects.toThrow();
 	});
 });

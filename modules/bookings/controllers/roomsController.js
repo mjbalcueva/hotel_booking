@@ -4,10 +4,12 @@ import {
 	processGetRoomById,
 	processGetRooms,
 } from '../functions/rooms.js';
+import { validateCreateRoomRequest } from './validations/roomRequest.js';
 
 const createRoom = async (req, res) => {
 	try {
-		const { room_number, room_type, price_per_night } = req.body;
+		const { room_number, room_type, price_per_night } =
+			await validateCreateRoomRequest(req.body);
 		const result = await processCreateRoom({
 			room_number,
 			room_type,

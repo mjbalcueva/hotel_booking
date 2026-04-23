@@ -16,6 +16,9 @@ importers:
       pg:
         specifier: ^8.20.0
         version: 8.20.0
+      yup:
+        specifier: ^1.7.1
+        version: 1.7.1
     devDependencies:
       jest:
         specifier: ^30.3.0
@@ -2335,6 +2338,12 @@ packages:
       }
     engines: { node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0 }
 
+  property-expr@2.0.6:
+    resolution:
+      {
+        integrity: sha512-SVtmxhRE/CGkn3eZY1T6pC8Nln6Fr/lu1mKSgRud0eC73whjGfoAogbn78LkD8aFL0zz3bAFerKSnOl7NlErBA==,
+      }
+
   proxy-addr@2.0.7:
     resolution:
       {
@@ -2657,6 +2666,12 @@ packages:
       }
     engines: { node: '>=8' }
 
+  tiny-case@1.0.3:
+    resolution:
+      {
+        integrity: sha512-Eet/eeMhkO6TX8mnUteS9zgPbUMQa4I6Kkp5ORiBD5476/m+PIRiumP5tmh5ioJpH7k51Kehawy2UDfsnxxY8Q==,
+      }
+
   tmpl@1.0.5:
     resolution:
       {
@@ -2676,6 +2691,12 @@ packages:
         integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==,
       }
     engines: { node: '>=0.6' }
+
+  toposort@2.0.2:
+    resolution:
+      {
+        integrity: sha512-0a5EOkAUp8D4moMi2W8ZF8jcga7BgZd91O/yabJCFY8az+XSzeGyTKs0Aoo897iV1Nj6guFq8orWDS96z91oGg==,
+      }
 
   touch@3.1.1:
     resolution:
@@ -2703,6 +2724,13 @@ packages:
         integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==,
       }
     engines: { node: '>=10' }
+
+  type-fest@2.19.0:
+    resolution:
+      {
+        integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==,
+      }
+    engines: { node: '>=12.20' }
 
   type-is@2.0.1:
     resolution:
@@ -2840,6 +2868,12 @@ packages:
         integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==,
       }
     engines: { node: '>=10' }
+
+  yup@1.7.1:
+    resolution:
+      {
+        integrity: sha512-GKHFX2nXul2/4Dtfxhozv701jLQHdf6J34YDh2cEkpqoo8le5Mg6/LrdseVLrFarmFygZTlfIhHx/QKfb/QWXw==,
+      }
 
 snapshots:
   '@babel/code-frame@7.29.0':
@@ -4441,6 +4475,8 @@ snapshots:
       ansi-styles: 5.2.0
       react-is: 18.3.1
 
+  property-expr@2.0.6: {}
+
   proxy-addr@2.0.7:
     dependencies:
       forwarded: 0.2.0
@@ -4634,6 +4670,8 @@ snapshots:
       glob: 7.2.3
       minimatch: 3.1.5
 
+  tiny-case@1.0.3: {}
+
   tmpl@1.0.5: {}
 
   to-regex-range@5.0.1:
@@ -4641,6 +4679,8 @@ snapshots:
       is-number: 7.0.0
 
   toidentifier@1.0.1: {}
+
+  toposort@2.0.2: {}
 
   touch@3.1.1: {}
 
@@ -4650,6 +4690,8 @@ snapshots:
   type-detect@4.0.8: {}
 
   type-fest@0.21.3: {}
+
+  type-fest@2.19.0: {}
 
   type-is@2.0.1:
     dependencies:
@@ -4747,3 +4789,10 @@ snapshots:
       yargs-parser: 21.1.1
 
   yocto-queue@0.1.0: {}
+
+  yup@1.7.1:
+    dependencies:
+      property-expr: 2.0.6
+      tiny-case: 1.0.3
+      toposort: 2.0.2
+      type-fest: 2.19.0
