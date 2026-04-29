@@ -12,4 +12,16 @@ const validateCreateGuestRequest = (form) => {
 	return schema.validate(form, { abortEarly: false, strict: true });
 };
 
-export { validateCreateGuestRequest };
+const validateEditGuestRequest = (form) => {
+	const formShape = {
+		first_name: yup.string(),
+		last_name: yup.string(),
+		email: yup.string().email(),
+		phone: yup.string(),
+	};
+
+	const schema = yup.object().shape(formShape);
+	return schema.validate(form, { abortEarly: false, strict: true });
+};
+
+export { validateCreateGuestRequest, validateEditGuestRequest };

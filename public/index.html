@@ -85,7 +85,12 @@
 				</section>
 
 				<section class="bg-zinc-800 rounded-lg shadow p-6">
-					<h2 class="text-xl font-semibold text-zinc-200 mb-4">Add Guest</h2>
+					<h2
+						id="guestFormTitle"
+						class="text-xl font-semibold text-zinc-200 mb-4"
+					>
+						Add Guest
+					</h2>
 					<form id="addGuestForm" class="space-y-4">
 						<div class="grid grid-cols-2 gap-3">
 							<input
@@ -113,12 +118,22 @@
 							placeholder="Phone"
 							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
 						/>
-						<button
-							type="submit"
-							class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-500 transition"
-						>
-							Add Guest
-						</button>
+						<div class="flex flex-wrap gap-2">
+							<button
+								type="submit"
+								id="guestSubmitBtn"
+								class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-500 transition"
+							>
+								Add Guest
+							</button>
+							<button
+								type="button"
+								id="cancelGuestEditBtn"
+								class="hidden bg-zinc-700 text-zinc-100 px-4 py-2 rounded hover:bg-zinc-600 transition"
+							>
+								Cancel Edit
+							</button>
+						</div>
 						<p id="addGuestMsg" class="text-sm mt-2"></p>
 					</form>
 				</section>
@@ -205,7 +220,8 @@
 									<th class="py-2 pr-4">ID</th>
 									<th class="py-2 pr-4">Name</th>
 									<th class="py-2 pr-4">Email</th>
-									<th class="py-2">Phone</th>
+									<th class="py-2 pr-4">Phone</th>
+									<th class="py-2">Action</th>
 								</tr>
 							</thead>
 							<tbody id="guestsTableBody" class="text-zinc-100"></tbody>
@@ -257,6 +273,7 @@
 			let bookings = [];
 			let weather = null;
 			let currentEditingRoomId = null;
+			let currentEditingGuestId = null;
 
 			const roomsTableBody = document.getElementById('roomsTableBody');
 			const guestsTableBody = document.getElementById('guestsTableBody');
@@ -379,6 +396,24 @@
 				return data.data;
 			};
 
+			const editGuestViaApi = async (
+				guestId,
+				{ first_name, last_name, email, phone },
+			) => {
+				const response = await fetch(`/bookings/guests/${guestId}`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ first_name, last_name, email, phone }),
+				});
+				const data = await response.json();
+
+				if (!data.success) {
+					throw new Error(data.error || 'Failed to edit guest');
+				}
+
+				return data.data;
+			};
+
 			const resetRoomFormMode = () => {
 				currentEditingRoomId = null;
 				document.getElementById('roomFormTitle').textContent = 'Add Room';
@@ -408,6 +443,41 @@
 					'text-sm mt-2 text-zinc-400';
 				document
 					.getElementById('addRoomForm')
+					.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			};
+
+			const resetGuestFormMode = () => {
+				currentEditingGuestId = null;
+				document.getElementById('guestFormTitle').textContent = 'Add Guest';
+				document.getElementById('guestSubmitBtn').textContent = 'Add Guest';
+				document.getElementById('cancelGuestEditBtn').classList.add('hidden');
+			};
+
+			const startGuestEdit = (guestId) => {
+				const guest = guests.find((item) => item.id === guestId);
+				if (!guest) {
+					guestsMsg.textContent = `Guest #${guestId} was not found.`;
+					guestsMsg.className = 'text-sm mt-3 text-red-500';
+					return;
+				}
+
+				currentEditingGuestId = guestId;
+				document.getElementById('first_name').value = guest.first_name;
+				document.getElementById('last_name').value = guest.last_name;
+				document.getElementById('guest_email').value = guest.email;
+				document.getElementById('guest_phone').value = guest.phone;
+				document.getElementById('guestFormTitle').textContent =
+					`Edit Guest #${guestId}`;
+				document.getElementById('guestSubmitBtn').textContent = 'Save Guest';
+				document
+					.getElementById('cancelGuestEditBtn')
+					.classList.remove('hidden');
+				document.getElementById('addGuestMsg').textContent =
+					`Editing ${guest.first_name} ${guest.last_name}.`;
+				document.getElementById('addGuestMsg').className =
+					'text-sm mt-2 text-zinc-400';
+				document
+					.getElementById('addGuestForm')
 					.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			};
 
@@ -479,7 +549,7 @@
 			const renderGuests = () => {
 				if (!guests.length) {
 					guestsTableBody.innerHTML =
-						'<tr><td colspan="4" class="py-3 text-zinc-400">No guests found.</td></tr>';
+						'<tr><td colspan="5" class="py-3 text-zinc-400">No guests found.</td></tr>';
 					return;
 				}
 
@@ -490,7 +560,16 @@
 								<td class="py-2 pr-4">${guest.id}</td>
 								<td class="py-2 pr-4">${guest.first_name} ${guest.last_name}</td>
 								<td class="py-2 pr-4">${guest.email}</td>
-								<td class="py-2">${guest.phone}</td>
+								<td class="py-2 pr-4">${guest.phone}</td>
+								<td class="py-2">
+									<button
+										type="button"
+										class="edit-guest-btn bg-sky-700 text-white px-3 py-1 rounded hover:bg-sky-600 transition text-xs"
+										data-guest-id="${guest.id}"
+									>
+										Edit
+									</button>
+								</td>
 							</tr>
 						`,
 					)
@@ -664,21 +743,43 @@
 					}
 
 					try {
-						await createGuestViaApi({
-							first_name: firstName,
-							last_name: lastName,
-							email,
-							phone,
-						});
+						if (currentEditingGuestId) {
+							await editGuestViaApi(currentEditingGuestId, {
+								first_name: firstName,
+								last_name: lastName,
+								email,
+								phone,
+							});
+							e.target.reset();
+							resetGuestFormMode();
+							msg.textContent = `Guest ${firstName} ${lastName} updated successfully.`;
+						} else {
+							await createGuestViaApi({
+								first_name: firstName,
+								last_name: lastName,
+								email,
+								phone,
+							});
+							e.target.reset();
+							msg.textContent = `Guest ${firstName} ${lastName} added successfully.`;
+						}
 
-						e.target.reset();
-						msg.textContent = `Guest ${firstName} ${lastName} added successfully.`;
 						msg.className = 'text-sm mt-2 text-green-600';
 						await refreshAllViews({ reloadRooms: false, reloadGuests: true });
 					} catch (err) {
 						msg.textContent = err.message || 'Request failed.';
 						msg.className = 'text-sm mt-2 text-red-600';
 					}
+				});
+
+			document
+				.getElementById('cancelGuestEditBtn')
+				.addEventListener('click', () => {
+					document.getElementById('addGuestForm').reset();
+					resetGuestFormMode();
+					const msg = document.getElementById('addGuestMsg');
+					msg.textContent = 'Guest edit cancelled.';
+					msg.className = 'text-sm mt-2 text-zinc-400';
 				});
 
 			document
@@ -739,6 +840,13 @@
 					roomsMsg.textContent = err.message || 'Failed to delete room';
 					roomsMsg.className = 'text-sm mt-3 text-red-500';
 				}
+			});
+
+			guestsTableBody.addEventListener('click', (e) => {
+				const editButton = e.target.closest('.edit-guest-btn');
+				if (!editButton) return;
+
+				startGuestEdit(Number(editButton.getAttribute('data-guest-id')));
 			});
 
 			bookingsTableBody.addEventListener('click', async (e) => {

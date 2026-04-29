@@ -5,8 +5,12 @@ jest.unstable_mockModule('../../../includes/db/db.js', () => ({
 }));
 
 const { db } = await import('../../../includes/db/db.js');
-const { processCreateGuest, processGetGuestById, processGetGuests } =
-	await import('../functions/guests.js');
+const {
+	processCreateGuest,
+	processEditGuest,
+	processGetGuestById,
+	processGetGuests,
+} = await import('../functions/guests.js');
 const {
 	processCreateRoom,
 	processDeleteRoom,
@@ -14,7 +18,7 @@ const {
 	processGetRoomById,
 	processGetRooms,
 } = await import('../functions/rooms.js');
-const { validateCreateGuestRequest } =
+const { validateCreateGuestRequest, validateEditGuestRequest } =
 	await import('../controllers/validations/guestRequest.js');
 const { validateCreateRoomRequest, validateEditRoomRequest } =
 	await import('../controllers/validations/roomRequest.js');
@@ -279,6 +283,47 @@ describe('Guest Management', () => {
 
 		await expect(processGetGuestById(999)).rejects.toThrow('Guest not found');
 	});
+
+	it('should edit one guest successfully', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					first_name: 'Bruce',
+					last_name: 'Wayne',
+					email: 'batman@example.com',
+					phone: '555-0199',
+				},
+			],
+		});
+
+		const result = await processEditGuest(1, {
+			first_name: 'Bruce',
+			last_name: 'Wayne',
+			email: 'batman@example.com',
+			phone: '555-0199',
+		});
+
+		expect(result.success).toBe(true);
+		expect(result.data.email).toBe('batman@example.com');
+		expect(db.query).toHaveBeenCalledWith(
+			`UPDATE guests
+		 SET first_name = $1, last_name = $2, email = $3, phone = $4
+		 WHERE id = $5
+		 RETURNING *`,
+			['Bruce', 'Wayne', 'batman@example.com', '555-0199', 1],
+		);
+	});
+
+	it('should throw when editing missing guest', async () => {
+		db.query.mockResolvedValueOnce({ rows: [] });
+
+		await expect(
+			processEditGuest(999, {
+				email: 'missing@example.com',
+			}),
+		).rejects.toThrow('Guest not found');
+	});
 });
 
 describe('Guest Validation', () => {
@@ -289,6 +334,14 @@ describe('Guest Validation', () => {
 				last_name: 'Wayne',
 				email: 'not-an-email',
 				phone: '555-0101',
+			}),
+		).rejects.toThrow();
+	});
+
+	it('should reject guest edit with invalid email', async () => {
+		await expect(
+			validateEditGuestRequest({
+				email: 'not-an-email',
 			}),
 		).rejects.toThrow();
 	});
