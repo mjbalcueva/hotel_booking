@@ -6,7 +6,8 @@
 	"scripts": {
 		"test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
 		"dev": "nodemon -e js server.js",
-		"start": "node server.js"
+		"start": "node server.js",
+		"build": "pnpm install"
 	},
 	"jest": {
 		"testEnvironment": "node"
