@@ -467,7 +467,7 @@
 				const data = await response.json();
 
 				if (!data.success) {
-					throw new Error(data.error || 'Failed to cancel booking');
+					throw new Error(data.error || 'Failed to delete booking');
 				}
 
 				return data.data;
@@ -673,17 +673,13 @@
 											<option value="confirmed" ${booking.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
 											<option value="cancelled" ${booking.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
 										</select>
-										${
-											booking.status === 'pending'
-												? `<button
-													type="button"
-													class="cancel-booking-btn bg-amber-700 text-white px-3 py-1 rounded hover:bg-amber-600 transition text-xs"
-													data-booking-id="${booking.id}"
-												>
-													Cancel
-												</button>`
-												: ''
-										}
+										<button
+											type="button"
+											class="delete-booking-btn bg-red-700 text-white px-3 py-1 rounded hover:bg-red-600 transition text-xs"
+											data-booking-id="${booking.id}"
+										>
+											Delete
+										</button>
 									</div>
 								</td>
 							</tr>
@@ -986,14 +982,16 @@
 			});
 
 			bookingsTableBody.addEventListener('click', async (e) => {
-				const cancelButton = e.target.closest('.cancel-booking-btn');
-				if (!cancelButton) return;
+				const deleteButton = e.target.closest('.delete-booking-btn');
+				if (!deleteButton) return;
 
-				const bookingId = Number(cancelButton.getAttribute('data-booking-id'));
+				const bookingId = Number(deleteButton.getAttribute('data-booking-id'));
+				const shouldDelete = confirm(`Delete booking #${bookingId}?`);
+				if (!shouldDelete) return;
 
 				try {
 					await deleteBookingViaApi(bookingId);
-					bookingsMsg.textContent = `Booking #${bookingId} cancelled.`;
+					bookingsMsg.textContent = `Booking #${bookingId} deleted.`;
 					bookingsMsg.className = 'text-sm mt-3 text-green-600';
 					await refreshAllViews({
 						reloadRooms: false,
@@ -1001,7 +999,7 @@
 						reloadBookings: true,
 					});
 				} catch (err) {
-					bookingsMsg.textContent = err.message || 'Failed to cancel booking';
+					bookingsMsg.textContent = err.message || 'Failed to delete booking';
 					bookingsMsg.className = 'text-sm mt-3 text-red-500';
 				}
 			});
