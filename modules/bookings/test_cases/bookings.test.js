@@ -369,6 +369,14 @@ describe('Booking Management', () => {
 
 	const weatherApiResponse = {
 		data: {
+			timezone: 'Asia/Manila',
+			daily_units: {
+				time: 'iso8601',
+				weather_code: 'wmo code',
+				temperature_2m_max: '°C',
+				temperature_2m_min: '°C',
+				precipitation_sum: 'mm',
+			},
 			daily: {
 				time: ['2026-05-01'],
 				weather_code: [1],
@@ -380,7 +388,19 @@ describe('Booking Management', () => {
 	};
 
 	const expectedWeather = {
-		location: 'Manila',
+		source: 'open-meteo',
+		location: 'Legazpi',
+		address: 'Bicol Region',
+		latitude: 13.1412,
+		longitude: 123.7407,
+		timezone: 'Asia/Manila',
+		units: {
+			time: 'iso8601',
+			weather_code: 'wmo code',
+			temperature_2m_max: '°C',
+			temperature_2m_min: '°C',
+			precipitation_sum: 'mm',
+		},
 		date: '2026-05-01',
 		weather_code: 1,
 		temperature_2m_max: 32.5,
@@ -423,6 +443,9 @@ describe('Booking Management', () => {
 			'https://api.open-meteo.com/v1/forecast',
 			expect.objectContaining({
 				params: expect.objectContaining({
+					latitude: 13.1412,
+					longitude: 123.7407,
+					timezone: 'auto',
 					start_date: '2026-05-01',
 					end_date: '2026-05-01',
 				}),
@@ -432,6 +455,48 @@ describe('Booking Management', () => {
 			expect.stringContaining('INSERT INTO bookings'),
 			[1, 2, '2026-05-01', '2026-05-03', JSON.stringify(expectedWeather)],
 		);
+	});
+
+	it('should create a booking when the weather API fails', async () => {
+		const consoleErrorSpy = jest
+			.spyOn(console, 'error')
+			.mockImplementation(() => {});
+
+		axios.get.mockRejectedValueOnce(new Error('Open-Meteo unavailable'));
+		db.query.mockResolvedValueOnce({ rows: [] });
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					guest_id: 1,
+					room_id: 2,
+					check_in_date: '2026-05-01',
+					check_out_date: '2026-05-03',
+					status: 'pending',
+					weather_data: null,
+				},
+			],
+		});
+
+		const result = await processCreateBooking({
+			guest_id: 1,
+			room_id: 2,
+			check_in_date: '2026-05-01',
+			check_out_date: '2026-05-03',
+		});
+
+		expect(result.success).toBe(true);
+		expect(result.data.weather_data).toBeNull();
+		expect(consoleErrorSpy).toHaveBeenCalledWith(
+			'Weather API error:',
+			'Open-Meteo unavailable',
+		);
+		expect(db.query).toHaveBeenCalledWith(
+			expect.stringContaining('INSERT INTO bookings'),
+			[1, 2, '2026-05-01', '2026-05-03', null],
+		);
+
+		consoleErrorSpy.mockRestore();
 	});
 
 	it('should reject duplicate room booking for the same dates', async () => {

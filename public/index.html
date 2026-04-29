@@ -12,7 +12,7 @@
 
 			<section class="bg-zinc-800 rounded-lg shadow p-6 mb-6">
 				<h2 class="text-xl font-semibold text-zinc-200 mb-4">
-					Dashboard — Today's Weather
+					Dashboard — Latest Booking Weather Forecast
 				</h2>
 				<div id="weatherCard" class="text-zinc-200 text-sm"></div>
 			</section>
@@ -251,6 +251,7 @@
 								<th class="py-2 pr-4">Room</th>
 								<th class="py-2 pr-4">Check-in</th>
 								<th class="py-2 pr-4">Check-out</th>
+								<th class="py-2 pr-4">Forecast</th>
 								<th class="py-2 pr-4">Status</th>
 								<th class="py-2">Action</th>
 							</tr>
@@ -263,14 +264,9 @@
 		</div>
 
 		<script>
-			const MOCK_PATHS = {
-				weather: '/mock/weather.json',
-			};
-
 			let rooms = [];
 			let guests = [];
 			let bookings = [];
-			let weather = null;
 			let currentEditingRoomId = null;
 			let currentEditingGuestId = null;
 
@@ -300,6 +296,57 @@
 				const day = String(date.getDate()).padStart(2, '0');
 
 				return `${year}-${month}-${day}`;
+			};
+
+			const escapeHtml = (value) =>
+				String(value ?? '')
+					.replaceAll('&', '&amp;')
+					.replaceAll('<', '&lt;')
+					.replaceAll('>', '&gt;')
+					.replaceAll('"', '&quot;')
+					.replaceAll("'", '&#039;');
+
+			const parseWeatherData = (weatherData) => {
+				if (!weatherData) return null;
+
+				if (typeof weatherData === 'string') {
+					try {
+						return JSON.parse(weatherData);
+					} catch {
+						return null;
+					}
+				}
+
+				return weatherData;
+			};
+
+			const formatWeatherNumber = (value, unit = '') => {
+				if (value === null || value === undefined || value === '') return '-';
+
+				const numericValue = Number(value);
+				const displayValue = Number.isFinite(numericValue)
+					? numericValue.toFixed(1)
+					: value;
+
+				return `${displayValue}${unit}`;
+			};
+
+			const getBookingWeather = (booking) =>
+				parseWeatherData(booking.weather_data);
+
+			const renderWeatherSummary = (weatherData) => {
+				const weather = parseWeatherData(weatherData);
+				if (!weather) {
+					return '<span class="text-zinc-500">Unavailable</span>';
+				}
+
+				return `
+					<div class="space-y-1 text-xs">
+						<div class="text-zinc-300">${escapeHtml(formatDate(weather.date))}</div>
+						<div>Max/Min: ${escapeHtml(formatWeatherNumber(weather.temperature_2m_max, '°C'))} / ${escapeHtml(formatWeatherNumber(weather.temperature_2m_min, '°C'))}</div>
+						<div>Precip: ${escapeHtml(formatWeatherNumber(weather.precipitation_sum, ' mm'))}</div>
+					</div>
+				`;
 			};
 
 			const getGuestName = (guestId) => {
@@ -555,25 +602,31 @@
 					.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			};
 
-			const hydrateMockData = async () => {
-				const [weatherRes] = await Promise.all([fetch(MOCK_PATHS.weather)]);
-
-				weather = await weatherRes.json();
-			};
-
 			const renderWeather = () => {
-				if (!weather) {
+				const bookingWithWeather = [...bookings]
+					.reverse()
+					.find((booking) => getBookingWeather(booking));
+
+				if (!bookingWithWeather) {
 					weatherCard.innerHTML =
-						'<p class="text-zinc-400">Weather unavailable.</p>';
+						'<p class="text-zinc-400">Create a booking to fetch the check-in forecast from Open-Meteo and store it with the booking.</p><p class="text-zinc-500 mt-1">If the weather API is unavailable, the booking will still be saved and marked as forecast unavailable.</p>';
 					return;
 				}
 
+				const weather = getBookingWeather(bookingWithWeather);
+				const source =
+					weather.source && weather.source !== 'open-meteo'
+						? 'Weather API'
+						: 'Open-Meteo';
+
 				weatherCard.innerHTML = `
-					<p><span class="text-zinc-400">Location:</span> ${weather.location}</p>
-					<p><span class="text-zinc-400">Date:</span> ${weather.date}</p>
-					<p><span class="text-zinc-400">Summary:</span> ${weather.summary}</p>
-					<p><span class="text-zinc-400">Max/Min:</span> ${weather.temperature_2m_max}°C / ${weather.temperature_2m_min}°C</p>
-					<p><span class="text-zinc-400">Precipitation:</span> ${weather.precipitation_sum} mm</p>
+					<p><span class="text-zinc-400">Booking:</span> #${bookingWithWeather.id}</p>
+					<p><span class="text-zinc-400">Source:</span> ${escapeHtml(source)}</p>
+					<p><span class="text-zinc-400">Location:</span> ${escapeHtml(weather.location || 'Hotel location')}</p>
+					${weather.address ? `<p><span class="text-zinc-400">Address:</span> ${escapeHtml(weather.address)}</p>` : ''}
+					<p><span class="text-zinc-400">Forecast date:</span> ${escapeHtml(formatDate(weather.date || bookingWithWeather.check_in_date))}</p>
+					<p><span class="text-zinc-400">Max/Min:</span> ${escapeHtml(formatWeatherNumber(weather.temperature_2m_max, '°C'))} / ${escapeHtml(formatWeatherNumber(weather.temperature_2m_min, '°C'))}</p>
+					<p><span class="text-zinc-400">Precipitation:</span> ${escapeHtml(formatWeatherNumber(weather.precipitation_sum, ' mm'))}</p>
 				`;
 			};
 
@@ -649,7 +702,7 @@
 			const renderBookings = () => {
 				if (!bookings.length) {
 					bookingsTableBody.innerHTML =
-						'<tr><td colspan="7" class="py-3 text-zinc-400">No bookings found.</td></tr>';
+						'<tr><td colspan="8" class="py-3 text-zinc-400">No bookings found.</td></tr>';
 					return;
 				}
 
@@ -662,6 +715,7 @@
 								<td class="py-2 pr-4">${getRoomLabel(booking.room_id)}</td>
 								<td class="py-2 pr-4">${formatDate(booking.check_in_date)}</td>
 								<td class="py-2 pr-4">${formatDate(booking.check_out_date)}</td>
+								<td class="py-2 pr-4">${renderWeatherSummary(booking.weather_data)}</td>
 								<td class="py-2 pr-4 font-semibold ${statusClass(booking.status)}">${booking.status}</td>
 								<td class="py-2">
 									<div class="flex flex-wrap gap-2 items-center">
@@ -895,15 +949,20 @@
 					}
 
 					try {
-						await createBookingViaApi({
+						const createdBooking = await createBookingViaApi({
 							guest_id: guestId,
 							room_id: roomId,
 							check_in_date: checkInDate,
 							check_out_date: checkOutDate,
 						});
+						const createdWeather = parseWeatherData(
+							createdBooking?.weather_data,
+						);
 
 						e.target.reset();
-						msg.textContent = 'Booking added successfully.';
+						msg.textContent = createdWeather
+							? `Booking added successfully. Weather forecast saved for ${formatDate(createdWeather.date || checkInDate)}.`
+							: 'Booking added successfully. Weather forecast unavailable; booking was still saved.';
 						msg.className = 'text-sm mt-2 text-green-600';
 						await refreshAllViews({
 							reloadRooms: false,
@@ -1034,7 +1093,6 @@
 
 			(async () => {
 				try {
-					await hydrateMockData();
 					await refreshAllViews({
 						reloadRooms: true,
 						reloadGuests: true,

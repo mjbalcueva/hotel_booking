@@ -3,9 +3,10 @@ import moment from 'moment';
 import { db } from '../../../includes/db/db.js';
 
 const WEATHER_LOCATION = {
-	name: 'Manila',
-	latitude: 14.5995,
-	longitude: 120.9842,
+	name: 'Legazpi',
+	address: 'Bicol Region',
+	latitude: 13.1412,
+	longitude: 123.7407,
 };
 
 const fetchBookingWeather = async (checkInDate) => {
@@ -21,11 +22,16 @@ const fetchBookingWeather = async (checkInDate) => {
 					'temperature_2m_min',
 					'precipitation_sum',
 				].join(','),
-				timezone: 'UTC',
+				timezone: 'auto',
 				start_date: forecastDate,
 				end_date: forecastDate,
 			},
+			timeout: 5000,
 		});
+
+		if (response.data?.error) {
+			throw new Error(response.data.reason || 'Open-Meteo returned an error');
+		}
 
 		const daily = response.data?.daily;
 		if (!daily?.time?.length) {
@@ -33,14 +39,24 @@ const fetchBookingWeather = async (checkInDate) => {
 		}
 
 		return {
+			source: 'open-meteo',
 			location: WEATHER_LOCATION.name,
+			address: WEATHER_LOCATION.address,
+			latitude: WEATHER_LOCATION.latitude,
+			longitude: WEATHER_LOCATION.longitude,
+			timezone: response.data?.timezone ?? null,
+			units: response.data?.daily_units ?? {},
 			date: daily.time[0],
 			weather_code: daily.weather_code?.[0] ?? null,
 			temperature_2m_max: daily.temperature_2m_max?.[0] ?? null,
 			temperature_2m_min: daily.temperature_2m_min?.[0] ?? null,
 			precipitation_sum: daily.precipitation_sum?.[0] ?? null,
 		};
-	} catch {
+	} catch (error) {
+		console.error(
+			'Weather API error:',
+			error instanceof Error ? error.message : 'Unknown error',
+		);
 		return null;
 	}
 };
