@@ -459,6 +459,21 @@
 				return data.data;
 			};
 
+			const editBookingViaApi = async (bookingId, status) => {
+				const response = await fetch(`/bookings/${bookingId}`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ status }),
+				});
+				const data = await response.json();
+
+				if (!data.success) {
+					throw new Error(data.error || 'Failed to update booking');
+				}
+
+				return data.data;
+			};
+
 			const resetRoomFormMode = () => {
 				currentEditingRoomId = null;
 				document.getElementById('roomFormTitle').textContent = 'Add Room';
@@ -635,17 +650,27 @@
 								<td class="py-2 pr-4">${booking.check_out_date}</td>
 								<td class="py-2 pr-4 font-semibold ${statusClass(booking.status)}">${booking.status}</td>
 								<td class="py-2">
-									${
-										booking.status === 'pending'
-											? `<button
-												type="button"
-												class="cancel-booking-btn bg-amber-700 text-white px-3 py-1 rounded hover:bg-amber-600 transition text-xs"
-												data-booking-id="${booking.id}"
-											>
-												Cancel
-											</button>`
-											: '<span class="text-zinc-500 text-xs">-</span>'
-									}
+									<div class="flex flex-wrap gap-2 items-center">
+										<select
+											class="booking-status-select bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-2 py-1 text-xs"
+											data-booking-id="${booking.id}"
+										>
+											<option value="pending" ${booking.status === 'pending' ? 'selected' : ''}>Pending</option>
+											<option value="confirmed" ${booking.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+											<option value="cancelled" ${booking.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+										</select>
+										${
+											booking.status === 'pending'
+												? `<button
+													type="button"
+													class="cancel-booking-btn bg-amber-700 text-white px-3 py-1 rounded hover:bg-amber-600 transition text-xs"
+													data-booking-id="${booking.id}"
+												>
+													Cancel
+												</button>`
+												: ''
+										}
+									</div>
 								</td>
 							</tr>
 						`,
@@ -917,6 +942,33 @@
 				if (!editButton) return;
 
 				startGuestEdit(Number(editButton.getAttribute('data-guest-id')));
+			});
+
+			bookingsTableBody.addEventListener('change', async (e) => {
+				const statusSelect = e.target.closest('.booking-status-select');
+				if (!statusSelect) return;
+
+				const bookingId = Number(statusSelect.getAttribute('data-booking-id'));
+				const status = statusSelect.value;
+
+				try {
+					await editBookingViaApi(bookingId, status);
+					bookingsMsg.textContent = `Booking #${bookingId} updated to ${status}.`;
+					bookingsMsg.className = 'text-sm mt-3 text-green-600';
+					await refreshAllViews({
+						reloadRooms: false,
+						reloadGuests: false,
+						reloadBookings: true,
+					});
+				} catch (err) {
+					bookingsMsg.textContent = err.message || 'Failed to update booking';
+					bookingsMsg.className = 'text-sm mt-3 text-red-500';
+					await refreshAllViews({
+						reloadRooms: false,
+						reloadGuests: false,
+						reloadBookings: true,
+					});
+				}
 			});
 
 			bookingsTableBody.addEventListener('click', async (e) => {

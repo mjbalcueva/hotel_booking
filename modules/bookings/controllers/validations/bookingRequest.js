@@ -41,4 +41,16 @@ const validateCreateBookingRequest = (form) => {
 	return schema.validate(form, { abortEarly: false, strict: true });
 };
 
-export { validateCreateBookingRequest };
+const validateEditBookingRequest = (form) => {
+	const formShape = {
+		status: yup
+			.string()
+			.oneOf(['pending', 'confirmed', 'cancelled'])
+			.required(),
+	};
+
+	const schema = yup.object().shape(formShape);
+	return schema.validate(form, { abortEarly: false, strict: true });
+};
+
+export { validateCreateBookingRequest, validateEditBookingRequest };

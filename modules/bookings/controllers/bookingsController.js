@@ -1,11 +1,15 @@
 import {
 	processCreateBooking,
 	processDeleteBooking,
+	processEditBooking,
 	processGetBookingById,
 	processGetBookings,
 	processGetBookingsByGuestId,
 } from '../functions/bookings.js';
-import { validateCreateBookingRequest } from './validations/bookingRequest.js';
+import {
+	validateCreateBookingRequest,
+	validateEditBookingRequest,
+} from './validations/bookingRequest.js';
 
 const createBooking = async (req, res) => {
 	try {
@@ -62,10 +66,22 @@ const deleteBooking = async (req, res) => {
 	}
 };
 
+const editBooking = async (req, res) => {
+	try {
+		const id = Number(req.params.id);
+		const validatedForm = await validateEditBookingRequest(req.body);
+		const result = await processEditBooking(id, validatedForm);
+		return res.status(200).send({ ...result });
+	} catch (err) {
+		return res.status(400).send({ success: false, error: err.message });
+	}
+};
+
 export {
 	createBooking,
 	getBookings,
 	getBookingById,
 	getBookingsByGuestId,
 	deleteBooking,
+	editBooking,
 };

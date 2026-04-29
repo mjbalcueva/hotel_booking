@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
 	createBooking,
 	deleteBooking,
+	editBooking,
 	getBookingById,
 	getBookings,
 	getBookingsByGuestId,
@@ -18,5 +19,6 @@ bookingsRouter.use('/rooms', roomsRouter);
 bookingsRouter.use('/guests', guestsRouter);
 bookingsRouter.get('/:id', getBookingById);
 bookingsRouter.delete('/:id', deleteBooking);
+bookingsRouter.patch('/:id', editBooking);
 
 export { bookingsRouter };

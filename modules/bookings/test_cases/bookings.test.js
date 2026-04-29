@@ -13,6 +13,7 @@ const {
 	fetchBookingWeather,
 	processCreateBooking,
 	processDeleteBooking,
+	processEditBooking,
 	processGetBookingById,
 	processGetBookings,
 	processGetBookingsByGuestId,
@@ -32,7 +33,7 @@ const {
 } = await import('../functions/rooms.js');
 const { validateCreateGuestRequest, validateEditGuestRequest } =
 	await import('../controllers/validations/guestRequest.js');
-const { validateCreateBookingRequest } =
+const { validateCreateBookingRequest, validateEditBookingRequest } =
 	await import('../controllers/validations/bookingRequest.js');
 const { validateCreateRoomRequest, validateEditRoomRequest } =
 	await import('../controllers/validations/roomRequest.js');
@@ -538,6 +539,38 @@ describe('Booking Management', () => {
 		);
 	});
 
+	it('should edit booking status successfully', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					guest_id: 3,
+					room_id: 2,
+					check_in_date: '2026-05-01',
+					check_out_date: '2026-05-03',
+					status: 'confirmed',
+				},
+			],
+		});
+
+		const result = await processEditBooking(1, { status: 'confirmed' });
+
+		expect(result.success).toBe(true);
+		expect(result.data.status).toBe('confirmed');
+		expect(db.query).toHaveBeenCalledWith(
+			'UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *',
+			['confirmed', 1],
+		);
+	});
+
+	it('should throw when editing missing booking', async () => {
+		db.query.mockResolvedValueOnce({ rows: [] });
+
+		await expect(
+			processEditBooking(999, { status: 'confirmed' }),
+		).rejects.toThrow('Booking not found');
+	});
+
 	it('should reject booking creation with invalid dates', async () => {
 		await expect(
 			validateCreateBookingRequest({
@@ -545,6 +578,14 @@ describe('Booking Management', () => {
 				room_id: 2,
 				check_in_date: '2026-05-03',
 				check_out_date: '2026-05-01',
+			}),
+		).rejects.toThrow();
+	});
+
+	it('should reject booking edit with invalid status', async () => {
+		await expect(
+			validateEditBookingRequest({
+				status: 'archived',
 			}),
 		).rejects.toThrow();
 	});
