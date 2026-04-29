@@ -141,34 +141,94 @@
 
 			<section class="bg-zinc-800 rounded-lg shadow p-6 mt-6">
 				<h2 class="text-xl font-semibold text-zinc-200 mb-4">Create Booking</h2>
+				<p class="text-sm text-zinc-400 mb-4">
+					Choose the guest, room, and stay dates. The check-in date is also used
+					to save the Open-Meteo forecast for the booking.
+				</p>
 				<form
 					id="addBookingForm"
-					class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3"
+					class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-start"
 				>
-					<select
-						id="booking_guest"
-						class="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
-					></select>
-					<select
-						id="booking_room"
-						class="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
-					></select>
-					<input
-						type="date"
-						id="check_in_date"
-						class="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
-					/>
-					<input
-						type="date"
-						id="check_out_date"
-						class="bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
-					/>
-					<button
-						type="submit"
-						class="bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-500 transition"
-					>
-						Add Booking
-					</button>
+					<div>
+						<label
+							for="booking_guest"
+							class="block text-sm font-medium text-zinc-400 mb-1"
+						>
+							Guest
+						</label>
+						<select
+							id="booking_guest"
+							aria-describedby="booking_guest_help"
+							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+						></select>
+						<p id="booking_guest_help" class="text-xs text-zinc-500 mt-1">
+							Select the guest who will own this reservation.
+						</p>
+					</div>
+					<div>
+						<label
+							for="booking_room"
+							class="block text-sm font-medium text-zinc-400 mb-1"
+						>
+							Room
+						</label>
+						<select
+							id="booking_room"
+							aria-describedby="booking_room_help"
+							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+						></select>
+						<p id="booking_room_help" class="text-xs text-zinc-500 mt-1">
+							Choose the room to reserve for the stay.
+						</p>
+					</div>
+					<div>
+						<label
+							for="check_in_date"
+							class="block text-sm font-medium text-zinc-400 mb-1"
+						>
+							Check-in Date
+						</label>
+						<input
+							type="date"
+							id="check_in_date"
+							aria-describedby="check_in_date_help"
+							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+						/>
+						<p id="check_in_date_help" class="text-xs text-zinc-500 mt-1">
+							Arrival date; this date fetches the saved weather forecast.
+						</p>
+					</div>
+					<div>
+						<label
+							for="check_out_date"
+							class="block text-sm font-medium text-zinc-400 mb-1"
+						>
+							Check-out Date
+						</label>
+						<input
+							type="date"
+							id="check_out_date"
+							aria-describedby="check_out_date_help"
+							class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 rounded px-3 py-2"
+						/>
+						<p id="check_out_date_help" class="text-xs text-zinc-500 mt-1">
+							Departure date; must be after the check-in date.
+						</p>
+					</div>
+					<div>
+						<span class="block text-sm font-medium text-zinc-400 mb-1">
+							Submit
+						</span>
+						<button
+							type="submit"
+							class="w-full bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-500 transition"
+						>
+							Add Booking
+						</button>
+						<p class="text-xs text-zinc-500 mt-1">
+							Creates the booking and stores forecast data when available.
+						</p>
+					</div>
 				</form>
 				<p id="addBookingMsg" class="text-sm mt-2"></p>
 			</section>
