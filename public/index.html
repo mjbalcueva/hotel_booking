@@ -446,6 +446,19 @@
 				return data.data;
 			};
 
+			const deleteBookingViaApi = async (bookingId) => {
+				const response = await fetch(`/bookings/${bookingId}`, {
+					method: 'DELETE',
+				});
+				const data = await response.json();
+
+				if (!data.success) {
+					throw new Error(data.error || 'Failed to cancel booking');
+				}
+
+				return data.data;
+			};
+
 			const resetRoomFormMode = () => {
 				currentEditingRoomId = null;
 				document.getElementById('roomFormTitle').textContent = 'Add Room';
@@ -911,18 +924,20 @@
 				if (!cancelButton) return;
 
 				const bookingId = Number(cancelButton.getAttribute('data-booking-id'));
-				bookings = bookings.map((booking) =>
-					booking.id === bookingId
-						? { ...booking, status: 'cancelled' }
-						: booking,
-				);
-				bookingsMsg.textContent = `Booking #${bookingId} cancelled. (mock)`;
-				bookingsMsg.className = 'text-sm mt-3 text-green-600';
-				await refreshAllViews({
-					reloadRooms: false,
-					reloadGuests: false,
-					reloadBookings: false,
-				});
+
+				try {
+					await deleteBookingViaApi(bookingId);
+					bookingsMsg.textContent = `Booking #${bookingId} cancelled.`;
+					bookingsMsg.className = 'text-sm mt-3 text-green-600';
+					await refreshAllViews({
+						reloadRooms: false,
+						reloadGuests: false,
+						reloadBookings: true,
+					});
+				} catch (err) {
+					bookingsMsg.textContent = err.message || 'Failed to cancel booking';
+					bookingsMsg.className = 'text-sm mt-3 text-red-500';
+				}
 			});
 
 			document

@@ -95,10 +95,22 @@ const processGetBookingsByGuestId = async (guestId) => {
 	return { success: true, data: result.rows };
 };
 
+const processDeleteBooking = async (id) => {
+	const result = await db.query(
+		'DELETE FROM bookings WHERE id = $1 RETURNING *',
+		[id],
+	);
+	if (!result.rows[0]) {
+		throw new Error('Booking not found');
+	}
+	return { success: true, data: result.rows[0] };
+};
+
 export {
 	processCreateBooking,
 	processGetBookings,
 	processGetBookingById,
 	processGetBookingsByGuestId,
+	processDeleteBooking,
 	fetchBookingWeather,
 };

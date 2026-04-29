@@ -12,6 +12,7 @@ const { db } = await import('../../../includes/db/db.js');
 const {
 	fetchBookingWeather,
 	processCreateBooking,
+	processDeleteBooking,
 	processGetBookingById,
 	processGetBookings,
 	processGetBookingsByGuestId,
@@ -502,6 +503,38 @@ describe('Booking Management', () => {
 		expect(db.query).toHaveBeenCalledWith(
 			'SELECT * FROM bookings WHERE guest_id = $1 ORDER BY id ASC',
 			[3],
+		);
+	});
+
+	it('should delete one booking successfully', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					guest_id: 3,
+					room_id: 2,
+					check_in_date: '2026-05-01',
+					check_out_date: '2026-05-03',
+					status: 'pending',
+				},
+			],
+		});
+
+		const result = await processDeleteBooking(1);
+
+		expect(result.success).toBe(true);
+		expect(result.data.id).toBe(1);
+		expect(db.query).toHaveBeenCalledWith(
+			'DELETE FROM bookings WHERE id = $1 RETURNING *',
+			[1],
+		);
+	});
+
+	it('should throw when deleting missing booking', async () => {
+		db.query.mockResolvedValueOnce({ rows: [] });
+
+		await expect(processDeleteBooking(999)).rejects.toThrow(
+			'Booking not found',
 		);
 	});
 

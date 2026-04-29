@@ -1,5 +1,6 @@
 import {
 	processCreateBooking,
+	processDeleteBooking,
 	processGetBookingById,
 	processGetBookings,
 	processGetBookingsByGuestId,
@@ -51,4 +52,20 @@ const getBookingsByGuestId = async (req, res) => {
 	}
 };
 
-export { createBooking, getBookings, getBookingById, getBookingsByGuestId };
+const deleteBooking = async (req, res) => {
+	try {
+		const id = Number(req.params.id);
+		const result = await processDeleteBooking(id);
+		return res.status(200).send({ ...result });
+	} catch (err) {
+		return res.status(400).send({ success: false, error: err.message });
+	}
+};
+
+export {
+	createBooking,
+	getBookings,
+	getBookingById,
+	getBookingsByGuestId,
+	deleteBooking,
+};
