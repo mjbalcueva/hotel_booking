@@ -248,7 +248,6 @@
 
 		<script>
 			const MOCK_PATHS = {
-				guests: '/mock/guests.json',
 				bookings: '/mock/bookings.json',
 				weather: '/mock/weather.json',
 			};
@@ -297,6 +296,17 @@
 				}
 
 				rooms = data.data || [];
+			};
+
+			const loadGuestsFromApi = async () => {
+				const response = await fetch('/bookings/guests');
+				const data = await response.json();
+
+				if (!data.success) {
+					throw new Error(data.error || 'Failed to load guests');
+				}
+
+				guests = data.data || [];
 			};
 
 			const createRoomViaApi = async ({
@@ -402,13 +412,11 @@
 			};
 
 			const hydrateMockData = async () => {
-				const [guestsRes, bookingsRes, weatherRes] = await Promise.all([
-					fetch(MOCK_PATHS.guests),
+				const [bookingsRes, weatherRes] = await Promise.all([
 					fetch(MOCK_PATHS.bookings),
 					fetch(MOCK_PATHS.weather),
 				]);
 
-				guests = await guestsRes.json();
 				bookings = await bookingsRes.json();
 				weather = await weatherRes.json();
 			};
@@ -544,7 +552,10 @@
 					.join('');
 			};
 
-			const refreshAllViews = async ({ reloadRooms = true } = {}) => {
+			const refreshAllViews = async ({
+				reloadRooms = true,
+				reloadGuests = true,
+			} = {}) => {
 				if (reloadRooms) {
 					try {
 						await loadRoomsFromApi();
@@ -557,14 +568,24 @@
 					}
 				}
 
+				if (reloadGuests) {
+					try {
+						await loadGuestsFromApi();
+						guestsMsg.textContent = `Loaded ${guests.length} guest(s) from API.`;
+						guestsMsg.className = 'text-sm mt-3 text-zinc-400';
+					} catch (err) {
+						guests = [];
+						guestsMsg.textContent = err.message;
+						guestsMsg.className = 'text-sm mt-3 text-red-500';
+					}
+				}
+
 				renderWeather();
 				renderRooms();
 				renderGuests();
 				renderBookings();
 				syncBookingSelects();
 
-				guestsMsg.textContent = `Loaded ${guests.length} guest(s) from mock JSON.`;
-				guestsMsg.className = 'text-sm mt-3 text-zinc-400';
 				bookingsMsg.textContent = `Loaded ${bookings.length} booking(s) from mock JSON.`;
 				bookingsMsg.className = 'text-sm mt-3 text-zinc-400';
 			};
@@ -609,7 +630,7 @@
 						}
 
 						msg.className = 'text-sm mt-2 text-green-600';
-						await refreshAllViews({ reloadRooms: true });
+						await refreshAllViews({ reloadRooms: true, reloadGuests: false });
 					} catch (err) {
 						msg.textContent = err.message || 'Request failed.';
 						msg.className = 'text-sm mt-2 text-red-600';
@@ -643,18 +664,17 @@
 					}
 
 					try {
-						const createdGuest = await createGuestViaApi({
+						await createGuestViaApi({
 							first_name: firstName,
 							last_name: lastName,
 							email,
 							phone,
 						});
 
-						guests.push(createdGuest);
 						e.target.reset();
 						msg.textContent = `Guest ${firstName} ${lastName} added successfully.`;
 						msg.className = 'text-sm mt-2 text-green-600';
-						await refreshAllViews({ reloadRooms: false });
+						await refreshAllViews({ reloadRooms: false, reloadGuests: true });
 					} catch (err) {
 						msg.textContent = err.message || 'Request failed.';
 						msg.className = 'text-sm mt-2 text-red-600';
@@ -691,7 +711,7 @@
 					e.target.reset();
 					msg.textContent = 'Booking added successfully. (mock)';
 					msg.className = 'text-sm mt-2 text-green-600';
-					await refreshAllViews({ reloadRooms: false });
+					await refreshAllViews({ reloadRooms: false, reloadGuests: false });
 				});
 
 			roomsTableBody.addEventListener('click', async (e) => {
@@ -714,7 +734,7 @@
 					}
 					roomsMsg.textContent = `Deleted room #${roomId}.`;
 					roomsMsg.className = 'text-sm mt-3 text-green-600';
-					await refreshAllViews({ reloadRooms: true });
+					await refreshAllViews({ reloadRooms: true, reloadGuests: false });
 				} catch (err) {
 					roomsMsg.textContent = err.message || 'Failed to delete room';
 					roomsMsg.className = 'text-sm mt-3 text-red-500';
@@ -733,29 +753,29 @@
 				);
 				bookingsMsg.textContent = `Booking #${bookingId} cancelled. (mock)`;
 				bookingsMsg.className = 'text-sm mt-3 text-green-600';
-				await refreshAllViews({ reloadRooms: false });
+				await refreshAllViews({ reloadRooms: false, reloadGuests: false });
 			});
 
 			document
 				.getElementById('refreshRoomsBtn')
 				.addEventListener('click', async () => {
-					await refreshAllViews({ reloadRooms: true });
+					await refreshAllViews({ reloadRooms: true, reloadGuests: false });
 				});
 			document
 				.getElementById('refreshGuestsBtn')
 				.addEventListener('click', async () => {
-					await refreshAllViews({ reloadRooms: false });
+					await refreshAllViews({ reloadRooms: false, reloadGuests: true });
 				});
 			document
 				.getElementById('refreshBookingsBtn')
 				.addEventListener('click', async () => {
-					await refreshAllViews({ reloadRooms: false });
+					await refreshAllViews({ reloadRooms: false, reloadGuests: false });
 				});
 
 			(async () => {
 				try {
 					await hydrateMockData();
-					await refreshAllViews({ reloadRooms: true });
+					await refreshAllViews({ reloadRooms: true, reloadGuests: true });
 				} catch (err) {
 					weatherCard.innerHTML = `<p class="text-red-400">Failed to load data: ${err.message}</p>`;
 				}

@@ -10,4 +10,17 @@ const processCreateGuest = async ({ first_name, last_name, email, phone }) => {
 	return { success: true, data: result.rows[0] };
 };
 
-export { processCreateGuest };
+const processGetGuests = async () => {
+	const result = await db.query('SELECT * FROM guests ORDER BY id ASC');
+	return { success: true, data: result.rows };
+};
+
+const processGetGuestById = async (id) => {
+	const result = await db.query('SELECT * FROM guests WHERE id = $1', [id]);
+	if (!result.rows[0]) {
+		throw new Error('Guest not found');
+	}
+	return { success: true, data: result.rows[0] };
+};
+
+export { processCreateGuest, processGetGuests, processGetGuestById };

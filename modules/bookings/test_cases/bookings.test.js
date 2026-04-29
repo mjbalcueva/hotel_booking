@@ -5,7 +5,8 @@ jest.unstable_mockModule('../../../includes/db/db.js', () => ({
 }));
 
 const { db } = await import('../../../includes/db/db.js');
-const { processCreateGuest } = await import('../functions/guests.js');
+const { processCreateGuest, processGetGuestById, processGetGuests } =
+	await import('../functions/guests.js');
 const {
 	processCreateRoom,
 	processDeleteRoom,
@@ -219,6 +220,64 @@ describe('Guest Management', () => {
 		 RETURNING *`,
 			['Bruce', 'Wayne', 'bruce@example.com', '555-0101'],
 		);
+	});
+
+	it('should fetch all guests successfully', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					first_name: 'Bruce',
+					last_name: 'Wayne',
+					email: 'bruce@example.com',
+					phone: '555-0101',
+				},
+				{
+					id: 2,
+					first_name: 'Selina',
+					last_name: 'Kyle',
+					email: 'selina@example.com',
+					phone: '555-0102',
+				},
+			],
+		});
+
+		const result = await processGetGuests();
+
+		expect(result.success).toBe(true);
+		expect(result.data).toHaveLength(2);
+		expect(db.query).toHaveBeenCalledWith(
+			'SELECT * FROM guests ORDER BY id ASC',
+		);
+	});
+
+	it('should fetch one guest by id successfully', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					first_name: 'Bruce',
+					last_name: 'Wayne',
+					email: 'bruce@example.com',
+					phone: '555-0101',
+				},
+			],
+		});
+
+		const result = await processGetGuestById(1);
+
+		expect(result.success).toBe(true);
+		expect(result.data.id).toBe(1);
+		expect(db.query).toHaveBeenCalledWith(
+			'SELECT * FROM guests WHERE id = $1',
+			[1],
+		);
+	});
+
+	it('should throw when guest id does not exist', async () => {
+		db.query.mockResolvedValueOnce({ rows: [] });
+
+		await expect(processGetGuestById(999)).rejects.toThrow('Guest not found');
 	});
 });
 
