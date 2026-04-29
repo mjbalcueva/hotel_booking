@@ -349,6 +349,26 @@
 				return data.data;
 			};
 
+			const createGuestViaApi = async ({
+				first_name,
+				last_name,
+				email,
+				phone,
+			}) => {
+				const response = await fetch('/bookings/guests', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ first_name, last_name, email, phone }),
+				});
+				const data = await response.json();
+
+				if (!data.success) {
+					throw new Error(data.error || 'Failed to create guest');
+				}
+
+				return data.data;
+			};
+
 			const resetRoomFormMode = () => {
 				currentEditingRoomId = null;
 				document.getElementById('roomFormTitle').textContent = 'Add Room';
@@ -622,18 +642,23 @@
 						return;
 					}
 
-					guests.push({
-						id: nextId(guests),
-						first_name: firstName,
-						last_name: lastName,
-						email,
-						phone,
-					});
+					try {
+						const createdGuest = await createGuestViaApi({
+							first_name: firstName,
+							last_name: lastName,
+							email,
+							phone,
+						});
 
-					e.target.reset();
-					msg.textContent = `Guest ${firstName} ${lastName} added successfully. (mock)`;
-					msg.className = 'text-sm mt-2 text-green-600';
-					await refreshAllViews({ reloadRooms: false });
+						guests.push(createdGuest);
+						e.target.reset();
+						msg.textContent = `Guest ${firstName} ${lastName} added successfully.`;
+						msg.className = 'text-sm mt-2 text-green-600';
+						await refreshAllViews({ reloadRooms: false });
+					} catch (err) {
+						msg.textContent = err.message || 'Request failed.';
+						msg.className = 'text-sm mt-2 text-red-600';
+					}
 				});
 
 			document

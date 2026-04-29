@@ -5,6 +5,7 @@ jest.unstable_mockModule('../../../includes/db/db.js', () => ({
 }));
 
 const { db } = await import('../../../includes/db/db.js');
+const { processCreateGuest } = await import('../functions/guests.js');
 const {
 	processCreateRoom,
 	processDeleteRoom,
@@ -12,6 +13,8 @@ const {
 	processGetRoomById,
 	processGetRooms,
 } = await import('../functions/rooms.js');
+const { validateCreateGuestRequest } =
+	await import('../controllers/validations/guestRequest.js');
 const { validateCreateRoomRequest, validateEditRoomRequest } =
 	await import('../controllers/validations/roomRequest.js');
 
@@ -178,6 +181,55 @@ describe('Room Validation', () => {
 		await expect(
 			validateEditRoomRequest({
 				price_per_night: -1,
+			}),
+		).rejects.toThrow();
+	});
+});
+
+describe('Guest Management', () => {
+	beforeEach(() => {
+		jest.resetAllMocks();
+	});
+
+	it('should create a guest successfully', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					first_name: 'Bruce',
+					last_name: 'Wayne',
+					email: 'bruce@example.com',
+					phone: '555-0101',
+				},
+			],
+		});
+
+		const result = await processCreateGuest({
+			first_name: 'Bruce',
+			last_name: 'Wayne',
+			email: 'bruce@example.com',
+			phone: '555-0101',
+		});
+
+		expect(result.success).toBe(true);
+		expect(result.data.email).toBe('bruce@example.com');
+		expect(db.query).toHaveBeenCalledWith(
+			`INSERT INTO guests (first_name, last_name, email, phone)
+		 VALUES ($1, $2, $3, $4)
+		 RETURNING *`,
+			['Bruce', 'Wayne', 'bruce@example.com', '555-0101'],
+		);
+	});
+});
+
+describe('Guest Validation', () => {
+	it('should reject guest creation with invalid email', async () => {
+		await expect(
+			validateCreateGuestRequest({
+				first_name: 'Bruce',
+				last_name: 'Wayne',
+				email: 'not-an-email',
+				phone: '555-0101',
 			}),
 		).rejects.toThrow();
 	});
