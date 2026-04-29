@@ -390,6 +390,7 @@ describe('Booking Management', () => {
 
 	it('should create a booking successfully', async () => {
 		axios.get.mockResolvedValueOnce(weatherApiResponse);
+		db.query.mockResolvedValueOnce({ rows: [] });
 		db.query.mockResolvedValueOnce({
 			rows: [
 				{
@@ -413,6 +414,11 @@ describe('Booking Management', () => {
 
 		expect(result.success).toBe(true);
 		expect(result.data.id).toBe(1);
+		expect(db.query).toHaveBeenNthCalledWith(
+			1,
+			expect.stringContaining('SELECT id FROM bookings'),
+			[2, '2026-05-01', '2026-05-03'],
+		);
 		expect(axios.get).toHaveBeenCalledWith(
 			'https://api.open-meteo.com/v1/forecast',
 			expect.objectContaining({
@@ -428,6 +434,40 @@ describe('Booking Management', () => {
 		);
 	});
 
+	it('should reject duplicate room booking for the same dates', async () => {
+		db.query.mockResolvedValueOnce({ rows: [{ id: 8 }] });
+
+		await expect(
+			processCreateBooking({
+				guest_id: 1,
+				room_id: 2,
+				check_in_date: '2026-05-01',
+				check_out_date: '2026-05-03',
+			}),
+		).rejects.toThrow('Room is already booked for these dates');
+
+		expect(axios.get).not.toHaveBeenCalled();
+		expect(db.query).toHaveBeenCalledTimes(1);
+	});
+
+	it('should reject overlapping room bookings', async () => {
+		db.query.mockResolvedValueOnce({ rows: [{ id: 9 }] });
+
+		await expect(
+			processCreateBooking({
+				guest_id: 1,
+				room_id: 2,
+				check_in_date: '2026-05-02',
+				check_out_date: '2026-05-04',
+			}),
+		).rejects.toThrow('Room is already booked for these dates');
+
+		expect(db.query).toHaveBeenCalledWith(
+			expect.stringContaining('AND check_in_date < $3'),
+			[2, '2026-05-02', '2026-05-04'],
+		);
+	});
+
 	it('should fetch all bookings successfully', async () => {
 		db.query.mockResolvedValueOnce({
 			rows: [
@@ -435,8 +475,8 @@ describe('Booking Management', () => {
 					id: 1,
 					guest_id: 1,
 					room_id: 2,
-					check_in_date: '2026-05-01',
-					check_out_date: '2026-05-03',
+					check_in_date: new Date('2026-05-01T00:00:00.000Z'),
+					check_out_date: new Date('2026-05-03T00:00:00.000Z'),
 					status: 'pending',
 				},
 			],
@@ -446,6 +486,8 @@ describe('Booking Management', () => {
 
 		expect(result.success).toBe(true);
 		expect(result.data).toHaveLength(1);
+		expect(result.data[0].check_in_date).toBe('2026-05-01');
+		expect(result.data[0].check_out_date).toBe('2026-05-03');
 		expect(db.query).toHaveBeenCalledWith(
 			'SELECT * FROM bookings ORDER BY id ASC',
 		);
@@ -548,6 +590,19 @@ describe('Booking Management', () => {
 					room_id: 2,
 					check_in_date: '2026-05-01',
 					check_out_date: '2026-05-03',
+					status: 'pending',
+				},
+			],
+		});
+		db.query.mockResolvedValueOnce({ rows: [] });
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					guest_id: 3,
+					room_id: 2,
+					check_in_date: '2026-05-01',
+					check_out_date: '2026-05-03',
 					status: 'confirmed',
 				},
 			],
@@ -557,6 +612,16 @@ describe('Booking Management', () => {
 
 		expect(result.success).toBe(true);
 		expect(result.data.status).toBe('confirmed');
+		expect(db.query).toHaveBeenNthCalledWith(
+			1,
+			'SELECT * FROM bookings WHERE id = $1',
+			[1],
+		);
+		expect(db.query).toHaveBeenNthCalledWith(
+			2,
+			expect.stringContaining('AND id <> $4'),
+			[2, '2026-05-01', '2026-05-03', 1],
+		);
 		expect(db.query).toHaveBeenCalledWith(
 			'UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *',
 			['confirmed', 1],
@@ -569,6 +634,28 @@ describe('Booking Management', () => {
 		await expect(
 			processEditBooking(999, { status: 'confirmed' }),
 		).rejects.toThrow('Booking not found');
+	});
+
+	it('should reject booking status reactivation when dates conflict', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					guest_id: 3,
+					room_id: 2,
+					check_in_date: '2026-05-01',
+					check_out_date: '2026-05-03',
+					status: 'cancelled',
+				},
+			],
+		});
+		db.query.mockResolvedValueOnce({ rows: [{ id: 2 }] });
+
+		await expect(
+			processEditBooking(1, { status: 'confirmed' }),
+		).rejects.toThrow('Room is already booked for these dates');
+
+		expect(db.query).toHaveBeenCalledTimes(2);
 	});
 
 	it('should reject booking creation with invalid dates', async () => {

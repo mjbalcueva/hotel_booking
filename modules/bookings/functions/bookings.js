@@ -45,12 +45,51 @@ const fetchBookingWeather = async (checkInDate) => {
 	}
 };
 
+const formatBookingDate = (date) => moment(date).format('YYYY-MM-DD');
+
+const formatBookingDates = (booking) => ({
+	...booking,
+	check_in_date: formatBookingDate(booking.check_in_date),
+	check_out_date: formatBookingDate(booking.check_out_date),
+});
+
+const assertRoomIsAvailable = async ({
+	room_id,
+	check_in_date,
+	check_out_date,
+	excludedBookingId = null,
+}) => {
+	const params = [room_id, check_in_date, check_out_date];
+	const excludeCurrentBooking = excludedBookingId ? 'AND id <> $4' : '';
+
+	if (excludedBookingId) {
+		params.push(excludedBookingId);
+	}
+
+	const result = await db.query(
+		`SELECT id FROM bookings
+		 WHERE room_id = $1
+		 AND status <> 'cancelled'
+		 AND check_in_date < $3
+		 AND check_out_date > $2
+		 ${excludeCurrentBooking}
+		 LIMIT 1`,
+		params,
+	);
+
+	if (result.rows[0]) {
+		throw new Error('Room is already booked for these dates');
+	}
+};
+
 const processCreateBooking = async ({
 	guest_id,
 	room_id,
 	check_in_date,
 	check_out_date,
 }) => {
+	await assertRoomIsAvailable({ room_id, check_in_date, check_out_date });
+
 	const weatherData = await fetchBookingWeather(check_in_date);
 	const result = await db.query(
 		`INSERT INTO bookings (
@@ -71,12 +110,12 @@ const processCreateBooking = async ({
 		],
 	);
 
-	return { success: true, data: result.rows[0] };
+	return { success: true, data: formatBookingDates(result.rows[0]) };
 };
 
 const processGetBookings = async () => {
 	const result = await db.query('SELECT * FROM bookings ORDER BY id ASC');
-	return { success: true, data: result.rows };
+	return { success: true, data: result.rows.map(formatBookingDates) };
 };
 
 const processGetBookingById = async (id) => {
@@ -84,7 +123,7 @@ const processGetBookingById = async (id) => {
 	if (!result.rows[0]) {
 		throw new Error('Booking not found');
 	}
-	return { success: true, data: result.rows[0] };
+	return { success: true, data: formatBookingDates(result.rows[0]) };
 };
 
 const processGetBookingsByGuestId = async (guestId) => {
@@ -92,7 +131,7 @@ const processGetBookingsByGuestId = async (guestId) => {
 		'SELECT * FROM bookings WHERE guest_id = $1 ORDER BY id ASC',
 		[guestId],
 	);
-	return { success: true, data: result.rows };
+	return { success: true, data: result.rows.map(formatBookingDates) };
 };
 
 const processDeleteBooking = async (id) => {
@@ -103,10 +142,29 @@ const processDeleteBooking = async (id) => {
 	if (!result.rows[0]) {
 		throw new Error('Booking not found');
 	}
-	return { success: true, data: result.rows[0] };
+	return { success: true, data: formatBookingDates(result.rows[0]) };
 };
 
 const processEditBooking = async (id, { status }) => {
+	const existingBookingResult = await db.query(
+		'SELECT * FROM bookings WHERE id = $1',
+		[id],
+	);
+	if (!existingBookingResult.rows[0]) {
+		throw new Error('Booking not found');
+	}
+
+	const existingBooking = formatBookingDates(existingBookingResult.rows[0]);
+
+	if (status !== 'cancelled') {
+		await assertRoomIsAvailable({
+			room_id: existingBooking.room_id,
+			check_in_date: existingBooking.check_in_date,
+			check_out_date: existingBooking.check_out_date,
+			excludedBookingId: id,
+		});
+	}
+
 	const result = await db.query(
 		'UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *',
 		[status, id],
@@ -114,7 +172,7 @@ const processEditBooking = async (id, { status }) => {
 	if (!result.rows[0]) {
 		throw new Error('Booking not found');
 	}
-	return { success: true, data: result.rows[0] };
+	return { success: true, data: formatBookingDates(result.rows[0]) };
 };
 
 export {
