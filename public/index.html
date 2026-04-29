@@ -19,7 +19,12 @@
 
 			<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 				<section class="bg-zinc-800 rounded-lg shadow p-6">
-					<h2 class="text-xl font-semibold text-zinc-200 mb-4">Add Room</h2>
+					<h2
+						id="roomFormTitle"
+						class="text-xl font-semibold text-zinc-200 mb-4"
+					>
+						Add Room
+					</h2>
 					<form id="addRoomForm" class="space-y-4">
 						<div>
 							<label class="block text-sm font-medium text-zinc-400 mb-1"
@@ -59,12 +64,22 @@
 								class="w-full bg-zinc-700 border border-zinc-600 text-zinc-100 placeholder-zinc-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
 							/>
 						</div>
-						<button
-							type="submit"
-							class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500 transition"
-						>
-							Add Room
-						</button>
+						<div class="flex flex-wrap gap-2">
+							<button
+								type="submit"
+								id="roomSubmitBtn"
+								class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500 transition"
+							>
+								Add Room
+							</button>
+							<button
+								type="button"
+								id="cancelRoomEditBtn"
+								class="hidden bg-zinc-700 text-zinc-100 px-4 py-2 rounded hover:bg-zinc-600 transition"
+							>
+								Cancel Edit
+							</button>
+						</div>
 						<p id="addRoomMsg" class="text-sm mt-2"></p>
 					</form>
 				</section>
@@ -242,6 +257,7 @@
 			let guests = [];
 			let bookings = [];
 			let weather = null;
+			let currentEditingRoomId = null;
 
 			const roomsTableBody = document.getElementById('roomsTableBody');
 			const guestsTableBody = document.getElementById('guestsTableBody');
@@ -302,6 +318,24 @@
 				return data.data;
 			};
 
+			const editRoomViaApi = async (
+				roomId,
+				{ room_number, room_type, price_per_night },
+			) => {
+				const response = await fetch(`/bookings/rooms/${roomId}`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ room_number, room_type, price_per_night }),
+				});
+				const data = await response.json();
+
+				if (!data.success) {
+					throw new Error(data.error || 'Failed to edit room');
+				}
+
+				return data.data;
+			};
+
 			const deleteRoomViaApi = async (roomId) => {
 				const response = await fetch(`/bookings/rooms/${roomId}`, {
 					method: 'DELETE',
@@ -313,6 +347,38 @@
 				}
 
 				return data.data;
+			};
+
+			const resetRoomFormMode = () => {
+				currentEditingRoomId = null;
+				document.getElementById('roomFormTitle').textContent = 'Add Room';
+				document.getElementById('roomSubmitBtn').textContent = 'Add Room';
+				document.getElementById('cancelRoomEditBtn').classList.add('hidden');
+			};
+
+			const startRoomEdit = (roomId) => {
+				const room = rooms.find((item) => item.id === roomId);
+				if (!room) {
+					roomsMsg.textContent = `Room #${roomId} was not found.`;
+					roomsMsg.className = 'text-sm mt-3 text-red-500';
+					return;
+				}
+
+				currentEditingRoomId = roomId;
+				document.getElementById('room_number').value = room.room_number;
+				document.getElementById('room_type').value = room.room_type;
+				document.getElementById('price_per_night').value = room.price_per_night;
+				document.getElementById('roomFormTitle').textContent =
+					`Edit Room #${roomId}`;
+				document.getElementById('roomSubmitBtn').textContent = 'Save Room';
+				document.getElementById('cancelRoomEditBtn').classList.remove('hidden');
+				document.getElementById('addRoomMsg').textContent =
+					`Editing room ${room.room_number}.`;
+				document.getElementById('addRoomMsg').className =
+					'text-sm mt-2 text-zinc-400';
+				document
+					.getElementById('addRoomForm')
+					.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			};
 
 			const hydrateMockData = async () => {
@@ -359,13 +425,22 @@
 								<td class="py-2 pr-4 capitalize">${room.room_type}</td>
 								<td class="py-2 pr-4">$${Number(room.price_per_night).toFixed(2)}</td>
 								<td class="py-2">
-									<button
-										type="button"
-										class="delete-room-btn bg-red-700 text-white px-3 py-1 rounded hover:bg-red-600 transition text-xs"
-										data-room-id="${room.id}"
-									>
-										Delete
-									</button>
+									<div class="flex flex-wrap gap-2">
+										<button
+											type="button"
+											class="edit-room-btn bg-sky-700 text-white px-3 py-1 rounded hover:bg-sky-600 transition text-xs"
+											data-room-id="${room.id}"
+										>
+											Edit
+										</button>
+										<button
+											type="button"
+											class="delete-room-btn bg-red-700 text-white px-3 py-1 rounded hover:bg-red-600 transition text-xs"
+											data-room-id="${room.id}"
+										>
+											Delete
+										</button>
+									</div>
 								</td>
 							</tr>
 						`,
@@ -494,20 +569,41 @@
 					}
 
 					try {
-						await createRoomViaApi({
-							room_number: roomNumber,
-							room_type: roomType,
-							price_per_night: price,
-						});
+						if (currentEditingRoomId) {
+							await editRoomViaApi(currentEditingRoomId, {
+								room_number: roomNumber,
+								room_type: roomType,
+								price_per_night: price,
+							});
+							e.target.reset();
+							resetRoomFormMode();
+							msg.textContent = `Room ${roomNumber} updated successfully.`;
+						} else {
+							await createRoomViaApi({
+								room_number: roomNumber,
+								room_type: roomType,
+								price_per_night: price,
+							});
+							e.target.reset();
+							msg.textContent = `Room ${roomNumber} added successfully.`;
+						}
 
-						e.target.reset();
-						msg.textContent = `Room ${roomNumber} added successfully.`;
 						msg.className = 'text-sm mt-2 text-green-600';
 						await refreshAllViews({ reloadRooms: true });
 					} catch (err) {
 						msg.textContent = err.message || 'Request failed.';
 						msg.className = 'text-sm mt-2 text-red-600';
 					}
+				});
+
+			document
+				.getElementById('cancelRoomEditBtn')
+				.addEventListener('click', () => {
+					document.getElementById('addRoomForm').reset();
+					resetRoomFormMode();
+					const msg = document.getElementById('addRoomMsg');
+					msg.textContent = 'Room edit cancelled.';
+					msg.className = 'text-sm mt-2 text-zinc-400';
 				});
 
 			document
@@ -574,6 +670,12 @@
 				});
 
 			roomsTableBody.addEventListener('click', async (e) => {
+				const editButton = e.target.closest('.edit-room-btn');
+				if (editButton) {
+					startRoomEdit(Number(editButton.getAttribute('data-room-id')));
+					return;
+				}
+
 				const deleteButton = e.target.closest('.delete-room-btn');
 				if (!deleteButton) return;
 
@@ -581,6 +683,10 @@
 
 				try {
 					await deleteRoomViaApi(roomId);
+					if (currentEditingRoomId === roomId) {
+						document.getElementById('addRoomForm').reset();
+						resetRoomFormMode();
+					}
 					roomsMsg.textContent = `Deleted room #${roomId}.`;
 					roomsMsg.className = 'text-sm mt-3 text-green-600';
 					await refreshAllViews({ reloadRooms: true });

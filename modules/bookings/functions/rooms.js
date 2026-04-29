@@ -37,9 +37,52 @@ const processDeleteRoom = async (id) => {
 	return { success: true, data: result.rows[0] };
 };
 
+const processEditRoom = async (
+	id,
+	{ room_number, room_type, price_per_night },
+) => {
+	const updates = [];
+	const values = [];
+
+	if (room_number !== undefined) {
+		values.push(room_number);
+		updates.push(`room_number = $${values.length}`);
+	}
+
+	if (room_type !== undefined) {
+		values.push(room_type);
+		updates.push(`room_type = $${values.length}`);
+	}
+
+	if (price_per_night !== undefined) {
+		values.push(price_per_night);
+		updates.push(`price_per_night = $${values.length}`);
+	}
+
+	if (!updates.length) {
+		throw new Error('No room fields provided');
+	}
+
+	values.push(id);
+	const result = await db.query(
+		`UPDATE rooms
+		 SET ${updates.join(', ')}
+		 WHERE id = $${values.length}
+		 RETURNING *`,
+		values,
+	);
+
+	if (!result.rows[0]) {
+		throw new Error('Room not found');
+	}
+
+	return { success: true, data: result.rows[0] };
+};
+
 export {
 	processCreateRoom,
 	processGetRooms,
 	processGetRoomById,
 	processDeleteRoom,
+	processEditRoom,
 };

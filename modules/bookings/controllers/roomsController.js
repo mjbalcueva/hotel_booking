@@ -1,10 +1,14 @@
 import {
 	processCreateRoom,
 	processDeleteRoom,
+	processEditRoom,
 	processGetRoomById,
 	processGetRooms,
 } from '../functions/rooms.js';
-import { validateCreateRoomRequest } from './validations/roomRequest.js';
+import {
+	validateCreateRoomRequest,
+	validateEditRoomRequest,
+} from './validations/roomRequest.js';
 
 const createRoom = async (req, res) => {
 	try {
@@ -50,4 +54,15 @@ const deleteRoom = async (req, res) => {
 	}
 };
 
-export { createRoom, getRooms, getRoomById, deleteRoom };
+const editRoom = async (req, res) => {
+	try {
+		const id = Number(req.params.id);
+		const validatedForm = await validateEditRoomRequest(req.body);
+		const result = await processEditRoom(id, validatedForm);
+		return res.status(200).send({ ...result });
+	} catch (err) {
+		return res.status(400).send({ success: false, error: err.message });
+	}
+};
+
+export { createRoom, getRooms, getRoomById, deleteRoom, editRoom };

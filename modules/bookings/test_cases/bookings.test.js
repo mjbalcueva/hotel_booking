@@ -8,10 +8,11 @@ const { db } = await import('../../../includes/db/db.js');
 const {
 	processCreateRoom,
 	processDeleteRoom,
+	processEditRoom,
 	processGetRoomById,
 	processGetRooms,
 } = await import('../functions/rooms.js');
-const { validateCreateRoomRequest } =
+const { validateCreateRoomRequest, validateEditRoomRequest } =
 	await import('../controllers/validations/roomRequest.js');
 
 describe('Room Management', () => {
@@ -123,6 +124,45 @@ describe('Room Management', () => {
 
 		await expect(processDeleteRoom(999)).rejects.toThrow('Room not found');
 	});
+
+	it('should edit one room successfully', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					room_number: '201',
+					room_type: 'suite',
+					price_per_night: 275.0,
+				},
+			],
+		});
+
+		const result = await processEditRoom(1, {
+			room_number: '201',
+			room_type: 'suite',
+			price_per_night: 275.0,
+		});
+
+		expect(result.success).toBe(true);
+		expect(result.data.room_number).toBe('201');
+		expect(db.query).toHaveBeenCalledWith(
+			`UPDATE rooms
+		 SET room_number = $1, room_type = $2, price_per_night = $3
+		 WHERE id = $4
+		 RETURNING *`,
+			['201', 'suite', 275.0, 1],
+		);
+	});
+
+	it('should throw when editing missing room', async () => {
+		db.query.mockResolvedValueOnce({ rows: [] });
+
+		await expect(
+			processEditRoom(999, {
+				room_type: 'suite',
+			}),
+		).rejects.toThrow('Room not found');
+	});
 });
 
 describe('Room Validation', () => {
@@ -130,6 +170,14 @@ describe('Room Validation', () => {
 		await expect(
 			validateCreateRoomRequest({
 				room_number: '101',
+			}),
+		).rejects.toThrow();
+	});
+
+	it('should reject room edit with invalid price', async () => {
+		await expect(
+			validateEditRoomRequest({
+				price_per_night: -1,
 			}),
 		).rejects.toThrow();
 	});
