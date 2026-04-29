@@ -9,8 +9,13 @@ jest.unstable_mockModule('axios', () => ({
 
 const axios = (await import('axios')).default;
 const { db } = await import('../../../includes/db/db.js');
-const { fetchBookingWeather, processCreateBooking } =
-	await import('../functions/bookings.js');
+const {
+	fetchBookingWeather,
+	processCreateBooking,
+	processGetBookingById,
+	processGetBookings,
+	processGetBookingsByGuestId,
+} = await import('../functions/bookings.js');
 const {
 	processCreateGuest,
 	processEditGuest,
@@ -418,6 +423,85 @@ describe('Booking Management', () => {
 		expect(db.query).toHaveBeenCalledWith(
 			expect.stringContaining('INSERT INTO bookings'),
 			[1, 2, '2026-05-01', '2026-05-03', JSON.stringify(expectedWeather)],
+		);
+	});
+
+	it('should fetch all bookings successfully', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					guest_id: 1,
+					room_id: 2,
+					check_in_date: '2026-05-01',
+					check_out_date: '2026-05-03',
+					status: 'pending',
+				},
+			],
+		});
+
+		const result = await processGetBookings();
+
+		expect(result.success).toBe(true);
+		expect(result.data).toHaveLength(1);
+		expect(db.query).toHaveBeenCalledWith(
+			'SELECT * FROM bookings ORDER BY id ASC',
+		);
+	});
+
+	it('should fetch one booking by id successfully', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					guest_id: 1,
+					room_id: 2,
+					check_in_date: '2026-05-01',
+					check_out_date: '2026-05-03',
+					status: 'pending',
+				},
+			],
+		});
+
+		const result = await processGetBookingById(1);
+
+		expect(result.success).toBe(true);
+		expect(result.data.id).toBe(1);
+		expect(db.query).toHaveBeenCalledWith(
+			'SELECT * FROM bookings WHERE id = $1',
+			[1],
+		);
+	});
+
+	it('should throw when booking id does not exist', async () => {
+		db.query.mockResolvedValueOnce({ rows: [] });
+
+		await expect(processGetBookingById(999)).rejects.toThrow(
+			'Booking not found',
+		);
+	});
+
+	it('should fetch bookings for a specific guest', async () => {
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					guest_id: 3,
+					room_id: 2,
+					check_in_date: '2026-05-01',
+					check_out_date: '2026-05-03',
+					status: 'pending',
+				},
+			],
+		});
+
+		const result = await processGetBookingsByGuestId(3);
+
+		expect(result.success).toBe(true);
+		expect(result.data[0].guest_id).toBe(3);
+		expect(db.query).toHaveBeenCalledWith(
+			'SELECT * FROM bookings WHERE guest_id = $1 ORDER BY id ASC',
+			[3],
 		);
 	});
 

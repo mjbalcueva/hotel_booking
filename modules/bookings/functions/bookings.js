@@ -74,4 +74,31 @@ const processCreateBooking = async ({
 	return { success: true, data: result.rows[0] };
 };
 
-export { processCreateBooking, fetchBookingWeather };
+const processGetBookings = async () => {
+	const result = await db.query('SELECT * FROM bookings ORDER BY id ASC');
+	return { success: true, data: result.rows };
+};
+
+const processGetBookingById = async (id) => {
+	const result = await db.query('SELECT * FROM bookings WHERE id = $1', [id]);
+	if (!result.rows[0]) {
+		throw new Error('Booking not found');
+	}
+	return { success: true, data: result.rows[0] };
+};
+
+const processGetBookingsByGuestId = async (guestId) => {
+	const result = await db.query(
+		'SELECT * FROM bookings WHERE guest_id = $1 ORDER BY id ASC',
+		[guestId],
+	);
+	return { success: true, data: result.rows };
+};
+
+export {
+	processCreateBooking,
+	processGetBookings,
+	processGetBookingById,
+	processGetBookingsByGuestId,
+	fetchBookingWeather,
+};

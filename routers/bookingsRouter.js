@@ -1,12 +1,20 @@
 import { Router } from 'express';
-import { createBooking } from '../modules/bookings/controllers/bookingsController.js';
+import {
+	createBooking,
+	getBookingById,
+	getBookings,
+	getBookingsByGuestId,
+} from '../modules/bookings/controllers/bookingsController.js';
 import { guestsRouter } from '../modules/bookings/routers/guestsRouter.js';
 import { roomsRouter } from '../modules/bookings/routers/roomsRouter.js';
 
 const bookingsRouter = Router();
 
 bookingsRouter.post('/', createBooking);
+bookingsRouter.get('/', getBookings);
+bookingsRouter.get('/guest/:guest_id', getBookingsByGuestId);
 bookingsRouter.use('/rooms', roomsRouter);
 bookingsRouter.use('/guests', guestsRouter);
+bookingsRouter.get('/:id', getBookingById);
 
 export { bookingsRouter };
