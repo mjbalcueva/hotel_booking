@@ -301,9 +301,6 @@
 				return room ? `Room ${room.room_number}` : `Room #${roomId}`;
 			};
 
-			const nextId = (data) =>
-				data.length > 0 ? Math.max(...data.map((item) => item.id)) + 1 : 1;
-
 			const loadRoomsFromApi = async () => {
 				const response = await fetch('/bookings/rooms');
 				const data = await response.json();
@@ -409,6 +406,31 @@
 
 				if (!data.success) {
 					throw new Error(data.error || 'Failed to edit guest');
+				}
+
+				return data.data;
+			};
+
+			const createBookingViaApi = async ({
+				guest_id,
+				room_id,
+				check_in_date,
+				check_out_date,
+			}) => {
+				const response = await fetch('/bookings', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						guest_id,
+						room_id,
+						check_in_date,
+						check_out_date,
+					}),
+				});
+				const data = await response.json();
+
+				if (!data.success) {
+					throw new Error(data.error || 'Failed to create booking');
 				}
 
 				return data.data;
@@ -800,19 +822,23 @@
 						return;
 					}
 
-					bookings.push({
-						id: nextId(bookings),
-						guest_id: guestId,
-						room_id: roomId,
-						check_in_date: checkInDate,
-						check_out_date: checkOutDate,
-						status: 'pending',
-					});
+					try {
+						const createdBooking = await createBookingViaApi({
+							guest_id: guestId,
+							room_id: roomId,
+							check_in_date: checkInDate,
+							check_out_date: checkOutDate,
+						});
 
-					e.target.reset();
-					msg.textContent = 'Booking added successfully. (mock)';
-					msg.className = 'text-sm mt-2 text-green-600';
-					await refreshAllViews({ reloadRooms: false, reloadGuests: false });
+						bookings.push(createdBooking);
+						e.target.reset();
+						msg.textContent = 'Booking added successfully.';
+						msg.className = 'text-sm mt-2 text-green-600';
+						await refreshAllViews({ reloadRooms: false, reloadGuests: false });
+					} catch (err) {
+						msg.textContent = err.message || 'Request failed.';
+						msg.className = 'text-sm mt-2 text-red-600';
+					}
 				});
 
 			roomsTableBody.addEventListener('click', async (e) => {

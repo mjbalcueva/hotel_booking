@@ -3,8 +3,14 @@ import { jest } from '@jest/globals';
 jest.unstable_mockModule('../../../includes/db/db.js', () => ({
 	db: { query: jest.fn() },
 }));
+jest.unstable_mockModule('axios', () => ({
+	default: { get: jest.fn() },
+}));
 
+const axios = (await import('axios')).default;
 const { db } = await import('../../../includes/db/db.js');
+const { fetchBookingWeather, processCreateBooking } =
+	await import('../functions/bookings.js');
 const {
 	processCreateGuest,
 	processEditGuest,
@@ -20,6 +26,8 @@ const {
 } = await import('../functions/rooms.js');
 const { validateCreateGuestRequest, validateEditGuestRequest } =
 	await import('../controllers/validations/guestRequest.js');
+const { validateCreateBookingRequest } =
+	await import('../controllers/validations/bookingRequest.js');
 const { validateCreateRoomRequest, validateEditRoomRequest } =
 	await import('../controllers/validations/roomRequest.js');
 
@@ -344,5 +352,92 @@ describe('Guest Validation', () => {
 				email: 'not-an-email',
 			}),
 		).rejects.toThrow();
+	});
+});
+
+describe('Booking Management', () => {
+	beforeEach(() => {
+		jest.resetAllMocks();
+	});
+
+	const weatherApiResponse = {
+		data: {
+			daily: {
+				time: ['2026-05-01'],
+				weather_code: [1],
+				temperature_2m_max: [32.5],
+				temperature_2m_min: [25.2],
+				precipitation_sum: [0.4],
+			},
+		},
+	};
+
+	const expectedWeather = {
+		location: 'Manila',
+		date: '2026-05-01',
+		weather_code: 1,
+		temperature_2m_max: 32.5,
+		temperature_2m_min: 25.2,
+		precipitation_sum: 0.4,
+	};
+
+	it('should create a booking successfully', async () => {
+		axios.get.mockResolvedValueOnce(weatherApiResponse);
+		db.query.mockResolvedValueOnce({
+			rows: [
+				{
+					id: 1,
+					guest_id: 1,
+					room_id: 2,
+					check_in_date: '2026-05-01',
+					check_out_date: '2026-05-03',
+					status: 'pending',
+					weather_data: expectedWeather,
+				},
+			],
+		});
+
+		const result = await processCreateBooking({
+			guest_id: 1,
+			room_id: 2,
+			check_in_date: '2026-05-01',
+			check_out_date: '2026-05-03',
+		});
+
+		expect(result.success).toBe(true);
+		expect(result.data.id).toBe(1);
+		expect(axios.get).toHaveBeenCalledWith(
+			'https://api.open-meteo.com/v1/forecast',
+			expect.objectContaining({
+				params: expect.objectContaining({
+					start_date: '2026-05-01',
+					end_date: '2026-05-01',
+				}),
+			}),
+		);
+		expect(db.query).toHaveBeenCalledWith(
+			expect.stringContaining('INSERT INTO bookings'),
+			[1, 2, '2026-05-01', '2026-05-03', JSON.stringify(expectedWeather)],
+		);
+	});
+
+	it('should reject booking creation with invalid dates', async () => {
+		await expect(
+			validateCreateBookingRequest({
+				guest_id: 1,
+				room_id: 2,
+				check_in_date: '2026-05-03',
+				check_out_date: '2026-05-01',
+			}),
+		).rejects.toThrow();
+	});
+
+	it('should fetch weather data for a booking date', async () => {
+		axios.get.mockResolvedValueOnce(weatherApiResponse);
+
+		const result = await fetchBookingWeather('2026-05-01');
+
+		expect(result).toEqual(expectedWeather);
+		expect(axios.get).toHaveBeenCalled();
 	});
 });
